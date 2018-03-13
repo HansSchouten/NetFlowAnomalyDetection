@@ -58,6 +58,12 @@ Import the project by following these steps:
 5. If there is no SDK, create a one with the "+" sign top left, then click "JDK", select your JDK home directory and click "OK". Otherwise simply select your SDK.
 6. Continue by clicking "Next" again and finish the import.
 
+Create a IntelliJ Build Artifact by:
+1. Go to *Build* and then to *Build Artifacts* and then to *Edit*
+2. Add a new Build Artifact
+3. Output the jar in: c:\flink\jars
+4. Choose as main class: *org.apache.flink.streaming.examples.kafka.ReadFromKafka*
+
 Create a Maven Run configuration by:
 1. Go to *Run* and then to *Edit Configurations*
 2. Add a new Maven configuration
@@ -70,5 +76,6 @@ Next, perform the following steps:
 2. Run kafka-server.bat
 3. Run flow-to-kafka.bat
 4. Run Flowalyzer and switch the the Generator tab
-5. Run the Maven run configuration that you prepared in IntelliJ
-6. Once the Flink Job is running, you can start generating NetFlows with Flowalyzer
+5. Switch to IntelliJ and build the project [Ctrl+F9]
+6. Run the Maven run configuration that you prepared in IntelliJ
+7. Once the Flink Job is running, you can start generating NetFlows with Flowalyzer
