@@ -75,7 +75,7 @@ Next, perform the following steps:
 1. Run zookeeper.bat
 2. Run kafka-server.bat
 3. Run flow-to-kafka.bat
-4. Run Flowalyzer and switch the the Generator tab
+4. Run Flowalyzer, switch to the Generator tab and switch to NetFlow v9. Also replace the UDP Port by: 4729, which is the port vflow is listening on
 5. Switch to IntelliJ and build the project [Ctrl+F9]
 6. Run the Maven run configuration that you prepared in IntelliJ
 7. Once the Flink Job is running, you can start generating NetFlows with Flowalyzer
