@@ -62,12 +62,12 @@ Create a IntelliJ Build Artifact by:
 1. Go to *Build* and then to *Build Artifacts* and then to *Edit*
 2. Add a new Build Artifact
 3. Output the jar in: c:\flink\jars
-4. Choose as main class: *org.apache.flink.streaming.examples.kafka.ReadFromKafka*
+4. Choose as main class: *org.tudelft.flink.streaming.heavyhitters.KafkaHeavyHitters*
 
 Create a Maven Run configuration by:
 1. Go to *Run* and then to *Edit Configurations*
 2. Add a new Maven configuration
-3. Specify the following command line argument: *exec:java -Dexec.mainClass=org.apache.flink.streaming.examples.kafka.ReadFromKafka "-Dexec.args=--topic vflow.netflow9 --bootstrap.servers localhost:9092 --zookeeper.connect localhost:2181 --group.id group1"*
+3. Specify the following command line argument: *exec:java -Dexec.mainClass=org.tudelft.flink.streaming.heavyhitters.KafkaHeavyHitters "-Dexec.args=--topic vflow.netflow9 --bootstrap.servers localhost:9092 --zookeeper.connect localhost:2181 --group.id group1"*
 
 ### Running the System
 To run the system you need to download all .bat files from the bat-files folder in this repository.  
