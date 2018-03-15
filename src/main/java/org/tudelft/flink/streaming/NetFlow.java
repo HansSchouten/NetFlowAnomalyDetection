@@ -3,7 +3,7 @@ package org.tudelft.flink.streaming;
 import java.io.Serializable;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class Netflow implements Serializable {
+public class NetFlow implements Serializable {
 
     private static final long serialVersionUID = 8078274017619893051L;
 
@@ -13,7 +13,7 @@ public class Netflow implements Serializable {
     public String srcPort;
     public String dstPort;
 
-    public Netflow(){}
+    public NetFlow(){}
 
     public void setFromString(String line) {
         JsonNode jsonNode = null;

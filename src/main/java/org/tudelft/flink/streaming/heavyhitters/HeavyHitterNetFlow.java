@@ -1,9 +1,9 @@
 package org.tudelft.flink.streaming.heavyhitters;
 
-import org.tudelft.flink.streaming.Netflow;
+import org.tudelft.flink.streaming.NetFlow;
 import org.tudelft.flink.streaming.TopN;
 
-public class HeavyHitterNetFlow extends Netflow implements Comparable<HeavyHitterNetFlow> {
+public class HeavyHitterNetFlow extends NetFlow implements Comparable<HeavyHitterNetFlow> {
 
     public final int max_size = 10;
 

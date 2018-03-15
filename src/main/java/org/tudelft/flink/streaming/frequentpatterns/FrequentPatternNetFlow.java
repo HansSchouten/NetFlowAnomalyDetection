@@ -1,10 +1,10 @@
 package org.tudelft.flink.streaming.frequentpatterns;
 
 import com.clearspring.analytics.stream.frequency.CountMinSketch;
-import org.tudelft.flink.streaming.Netflow;
+import org.tudelft.flink.streaming.NetFlow;
 import org.tudelft.flink.streaming.TopN;
 
-public class FrequentPatternNetFlow extends Netflow {
+public class FrequentPatternNetFlow extends NetFlow {
 
     public CountMinSketch cmSketch;
     public TopN topNPatterns;
