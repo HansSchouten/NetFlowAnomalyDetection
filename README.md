@@ -70,7 +70,7 @@ Create a Maven Run configuration by:
 3. Specify the following command line argument: *exec:java -Dexec.mainClass=org.tudelft.flink.streaming.heavyhitters.KafkaHeavyHitters "-Dexec.args=--topic vflow.netflow9 --bootstrap.servers localhost:9092 --zookeeper.connect localhost:2181 --group.id group1"*
 
 ### Running the System
-To run the system you need to download all .bat files from the bat-files folder in this repository.  
+To run the system you need to download all .bat files from the *batfiles* folder in this repository.  
 Next, perform the following steps:
 1. Run zookeeper.bat
 2. Run kafka-server.bat
