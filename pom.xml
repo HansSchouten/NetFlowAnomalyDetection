@@ -73,6 +73,13 @@ under the License.
 			<version>2.8.5</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.graphstream</groupId>
+			<artifactId>gs-core</artifactId>
+			<version>1.2</version>
+			<optional>false</optional>
+		</dependency>
+
 		<!-- test dependencies -->
 
 		<dependency>

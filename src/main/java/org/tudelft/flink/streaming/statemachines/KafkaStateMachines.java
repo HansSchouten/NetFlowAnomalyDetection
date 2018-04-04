@@ -1,4 +1,4 @@
-package org.tudelft.flink.streaming.frequentsequences;
+package org.tudelft.flink.streaming.statemachines;
 
 import org.apache.flink.api.common.functions.ReduceFunction;
 
@@ -7,11 +7,10 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
 
-public class KafkaFrequentSequences {
+public class KafkaStateMachines {
 
     public static void main(String[] args) throws Exception {
         // parse input arguments
@@ -35,22 +34,22 @@ public class KafkaFrequentSequences {
         env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
 
         // create Kafka consumer
-        FlinkKafkaConsumer010<FrequentSequenceNetFlow> kafkaConsumer = new FlinkKafkaConsumer010<>(
+        FlinkKafkaConsumer010<StateMachineNetFlow> kafkaConsumer = new FlinkKafkaConsumer010<>(
                 parameterTool.getRequired("topic"),
-                new FrequentSequenceNetFlowSchema(),
+                new StateMachineNetFlowSchema(),
                 parameterTool.getProperties());
 
         // create stream
-        DataStream<FrequentSequenceNetFlow> netFlowStream = env.addSource(kafkaConsumer);
+        DataStream<StateMachineNetFlow> netFlowStream = env.addSource(kafkaConsumer);
 
         // write Kafka stream to standard out.
-        DataStream<FrequentSequenceNetFlow> hostSequences = netFlowStream
+        DataStream<StateMachineNetFlow> hostSequences = netFlowStream
                 .keyBy("IPPair")
                 .timeWindow(Time.seconds(5))
-                .reduce(new ReduceFunction<FrequentSequenceNetFlow>() {
+                .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
-                    public FrequentSequenceNetFlow reduce(FrequentSequenceNetFlow rollingCount, FrequentSequenceNetFlow newNetflow) {
-                        rollingCount.processFlow(newNetflow);
+                    public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
+                        rollingCount.processFlow(newNetFlow);
                         return rollingCount;
                     }
                 });
@@ -59,6 +58,6 @@ public class KafkaFrequentSequences {
         hostSequences.print();//.setParallelism(1);
 
         // trigger execution
-        env.execute("Kafka NetFlow FrequentSequences");
+        env.execute("Kafka NetFlow StateMachines");
     }
 }

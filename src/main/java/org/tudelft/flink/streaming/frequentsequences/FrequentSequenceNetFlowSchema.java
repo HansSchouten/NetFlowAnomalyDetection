@@ -4,7 +4,6 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.streaming.util.serialization.DeserializationSchema;
 import org.apache.flink.streaming.util.serialization.SerializationSchema;
-import org.tudelft.flink.streaming.RandomWeightedCollection;
 
 public class FrequentSequenceNetFlowSchema implements DeserializationSchema<FrequentSequenceNetFlow>, SerializationSchema<FrequentSequenceNetFlow> {
 

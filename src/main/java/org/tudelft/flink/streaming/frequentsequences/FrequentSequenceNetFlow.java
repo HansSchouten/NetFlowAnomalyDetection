@@ -73,10 +73,10 @@ public class FrequentSequenceNetFlow extends NetFlow {
      * @return
      */
     protected State getState(FrequentSequenceNetFlow netFlow) {
-        if (netFlow.flow_size < 200) {
+        if (netFlow.byteCount < 200) {
             return State.LOW_SIZE;
         }
-        if (netFlow.flow_size < 300) {
+        if (netFlow.byteCount < 300) {
             return State.MEDIUM_SIZE;
         }
         return State.HIGH_SIZE;
@@ -85,12 +85,12 @@ public class FrequentSequenceNetFlow extends NetFlow {
 
     @Override
     public String toString() {
-        String res = "Transition counts for " + this.srcIP + "\n";
+        String res = "Symbol counts for " + this.srcIP + "\n";
         for (Pair<State, State> transition : this.transitionCounts.keySet()) {
             Long count = this.transitionCounts.get(transition);
             res += transition.getKey() + " > " + transition.getValue() + " : " + count + "\n";
         }
-        res += "\nTransition probabilities for " + this.srcIP + "\n";
+        res += "\nSymbol probabilities for " + this.srcIP + " to " + this.dstIP + "\n";
         for (State from : State.values()) {
             // compute the sum of the transition occurrences to other states
             long sum = 0;

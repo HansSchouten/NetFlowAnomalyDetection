@@ -10,12 +10,13 @@ public class NetFlow implements Serializable {
 
     public String json;
 
-    public long flow_size;
-    public long packet_count;
+    public long byteCount;
+    public long packetCount;
     public String srcIP;
     public String dstIP;
     public String srcPort;
     public String dstPort;
+    public String IPPair;
     public long start;
     public long end;
 
@@ -40,6 +41,7 @@ public class NetFlow implements Serializable {
                 String value = parameter.get("V").asText();
                 storeElement(id, value);
             }
+            this.IPPair = this.srcIP + "," + this.dstIP;
         }
     }
 
@@ -53,10 +55,10 @@ public class NetFlow implements Serializable {
     protected void storeElement(Integer id, String value) {
         switch (id) {
             case 1:
-                this.flow_size = Long.decode(value);
+                this.byteCount = Long.decode(value);
                 break;
             case 2:
-                this.packet_count = Long.decode(value);
+                this.packetCount = Long.decode(value);
                 break;
             case 7:
                 this.srcPort = value;
@@ -86,12 +88,28 @@ public class NetFlow implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        return false;
+        if (this == obj){
+            return true;
+        }
+        if (obj == null){
+            return false;
+        }
+        if (getClass() != obj.getClass()){
+            return false;
+        }
+        NetFlow other = (NetFlow) obj;
+        return this.toString().equals(other.toString());
     }
 
     @Override
     public String toString() {
-        return "<NetFlow[srcIP:" + this.srcIP + ", dstIP:" + this.dstIP + "]>";
+        return "<NetFlow[srcIP:" + this.srcIP
+                + ", srcPort:"  + this.srcPort
+                + ", dstIP:" + this.dstIP
+                + ", dstPort:"  + this.dstPort
+                + ", byteCount:"  + this.byteCount
+                + ", packetCount:"  + this.packetCount
+                + "]>";
     }
 
 }
