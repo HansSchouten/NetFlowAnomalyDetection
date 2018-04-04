@@ -9,7 +9,15 @@ public class StateMachineVisualiser {
 
     public void visualise(State root) {
         this.graph = new SingleGraph("State Machine");
+        this.graph.addAttribute("ui.antialias");
+        this.graph.addAttribute("ui.stylesheet",
+                "node { size: 20px; fill-color: rgb(244, 98, 66); text-size: 12; }" +
+                        "node.blue { fill-color: rgb(65, 166, 244); }" +
+                        "edge { text-size: 12; }"
+        );
+
         addState(root);
+
         this.graph.display();
     }
 
@@ -24,9 +32,12 @@ public class StateMachineVisualiser {
 
     public void addNode(State state) {
         String id = Integer.toString(state.hashCode());
-        if (! graph.hasNumber(id)) {
-            graph.addNode(id);
-            graph.getNode(id).setAttribute("ui.label", "[" + state.count + "]");
+        if (! this.graph.hasNumber(id)) {
+            this.graph.addNode(id);
+            this.graph.getNode(id).setAttribute("ui.label", "[" + state.count + "]");
+            if (state.color == State.Color.BLUE) {
+                this.graph.getNode(id).setAttribute("ui.class", "blue");
+            }
         }
     }
 
@@ -34,9 +45,9 @@ public class StateMachineVisualiser {
         String fromId = Integer.toString(from.hashCode());
         String toId = Integer.toString(to.hashCode());
         String edgeId = fromId + "-" + toId;
-        if (! graph.hasNumber(edgeId)) {
-            graph.addEdge(edgeId, fromId, toId, true);
-            graph.getEdge(edgeId).setAttribute("ui.label", symbol.toString());
+        if (! this.graph.hasNumber(edgeId)) {
+            this.graph.addEdge(edgeId, fromId, toId, true);
+            this.graph.getEdge(edgeId).setAttribute("ui.label", symbol.toString());
         }
     }
 

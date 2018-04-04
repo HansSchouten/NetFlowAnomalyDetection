@@ -9,7 +9,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Number of symbols contained in a future.
      */
-    public static final int FUTURE_SIZE = 3;
+    public static final int FUTURE_SIZE = 2;
     /**
      * Visualise final State Machine.
      */
