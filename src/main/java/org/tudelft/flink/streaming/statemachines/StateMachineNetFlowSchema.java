@@ -15,6 +15,10 @@ public class StateMachineNetFlowSchema implements DeserializationSchema<StateMac
     @Override
     public StateMachineNetFlow deserialize(byte[] message) {
         StateMachineNetFlow flow = new StateMachineNetFlow();
+        // enable PatternTester based on the setting in the main class
+        if (KafkaStateMachines.USE_PATTERN_TESTER) {
+            flow.patternTester = new PatternTester();
+        }
         flow.setFromString(new String(message));
         return flow;
     }

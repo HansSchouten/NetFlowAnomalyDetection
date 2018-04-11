@@ -9,7 +9,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Number of symbols contained in a future.
      */
-    public static final int FUTURE_SIZE = 2;
+    public static final int FUTURE_SIZE = 3;
     /**
      * Visualise final State Machine.
      */
@@ -35,6 +35,10 @@ public class StateMachineNetFlow extends NetFlow {
      * The list of all red states (states that are part of the final State Machine).
      */
     public List<State> redStates;
+    /**
+     * If set, a predefined pattern will be used instead of the Symbols extracted from the incoming NetFlows.
+     */
+    public PatternTester patternTester;
 
     /**
      * StateMachineNetFlow constructor.
@@ -67,13 +71,13 @@ public class StateMachineNetFlow extends NetFlow {
         this.currentSymbol = getSymbol(nextNetFlow);
 
         // update the future
-        if (future.size() == FUTURE_SIZE) {
-            future.poll();
+        if (this.future.size() == FUTURE_SIZE) {
+            this.future.poll();
         }
-        future.add(this.currentSymbol);
+        this.future.add(this.currentSymbol);
 
         // all futures start in the root, so add the root to the list of states to evaluate the current future on
-        if (future.size() == FUTURE_SIZE) {
+        if (this.future.size() == FUTURE_SIZE) {
             instances.put(this.root.hashCode(), this.root);
         }
 
@@ -99,7 +103,10 @@ public class StateMachineNetFlow extends NetFlow {
                 boolean is_merged = false;
                 for (State redState : this.redStates) {
                     if (instance.similarTo(redState)) {
+                        // merge instance with red state (pointing all incoming transitions to the red state instead)
                         instance.merge(redState);
+                        // continue evaluation in the red state the instance has merged with
+                        instance = redState;
                         is_merged = true;
                         break;
                     }
@@ -130,6 +137,11 @@ public class StateMachineNetFlow extends NetFlow {
      * @return
      */
     protected Symbol getSymbol(StateMachineNetFlow netFlow) {
+        // if a pattern tester is set, return the next symbol from the predefined pattern
+        if (this.patternTester != null) {
+            return this.patternTester.getNext();
+        }
+
         if (netFlow.byteCount < 200) {
             return Symbol.LOW_SIZE;
         }
@@ -139,11 +151,19 @@ public class StateMachineNetFlow extends NetFlow {
         return Symbol.HIGH_SIZE;
     }
 
+    /**
+     * Return the string representation of this rolling StateMachineNetFlow.
+     *
+     * @return
+     */
     @Override
     public String toString() {
         if (VISUALISE) {
             StateMachineVisualiser visualiser = new StateMachineVisualiser();
-            visualiser.visualise(this.root);
+            if (patternTester != null) {
+                visualiser.use_numbers = true;
+            }
+            visualiser.visualise(this.redStates);
             return "State Machine visualised";
         } else {
             String res = "";
@@ -151,7 +171,7 @@ public class StateMachineNetFlow extends NetFlow {
                 res += state.hashCode() + " [" + state.count + "]\n";
                 for (Symbol symbol : state.getTransitions()) {
                     State next = state.getState(symbol);
-                    res += "  " + symbol + " > " + next.hashCode() + " [" + next.count + "]\n";
+                    res += " " + symbol + " > " + next.hashCode() + " [" + next.count + "]\n";
                 }
                 res += "\n";
             }

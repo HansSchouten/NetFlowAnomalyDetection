@@ -26,6 +26,7 @@ public class NetFlow implements Serializable {
      */
     public void setFromString(String data) {
         JsonNode jsonNode = null;
+
         // parse JSON
         if (data != null) {
             jsonNode = JSONUtils.convertToJSON(data.getBytes());

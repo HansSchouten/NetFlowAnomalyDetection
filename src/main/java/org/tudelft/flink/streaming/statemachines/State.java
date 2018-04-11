@@ -10,7 +10,7 @@ public class State {
     /**
      * the number of futures processed by a state at which the state is merged or becomes a red state.
      */
-    public final int SIGNIFICANCE_BOUNDARY = 50;
+    public final int SIGNIFICANCE_BOUNDARY = 200;
     /**
      * the upper bound of the Chi-distance below which the sketches are regarded as similar.
      */
@@ -24,6 +24,7 @@ public class State {
     }
 
     protected Map<Symbol, State> transitions;
+    protected Map<Symbol, State> inLinks;
     protected CountMinSketch sketch;
     protected Color color;
     protected int count;
@@ -36,6 +37,7 @@ public class State {
      */
     public State(Color color, int depth) {
         this.transitions = new HashMap<>();
+        this.inLinks = new HashMap<>();
         this.sketch = new CountMinSketch(DEPTH, WIDTH, 1);
         this.color = color;
         this.count = 0;
@@ -49,9 +51,12 @@ public class State {
      */
     public void increaseFrequency(Queue<Symbol> future)
     {
-        String signature = futureToString(future);
-        // increase the occurrence frequency of the future by one
-        this.sketch.add(signature, 1);
+        // since we compare without normalization, allow at most SIGNIFICANCE_BOUNDARY patterns in the sketch
+        if (this.count < SIGNIFICANCE_BOUNDARY) {
+            String signature = futureToString(future);
+            // increase the occurrence frequency of the future by one
+            this.sketch.add(signature, 1);
+        }
         this.count++;
     }
 
@@ -69,8 +74,33 @@ public class State {
         return res;
     }
 
+    /**
+     * Return all possible transitions.
+     *
+     * @return
+     */
     public Set<Symbol> getTransitions() {
         return this.transitions.keySet();
+    }
+
+    /**
+     * Add a link from the given origin to this state via the given symbol.
+     *
+     * @param symbol
+     * @param origin
+     */
+    public void addInLink(Symbol symbol, State origin) {
+        this.inLinks.put(symbol, origin);
+    }
+
+    /**
+     * Set the transition with the given symbol to the given next state.
+     *
+     * @param symbol
+     * @param next
+     */
+    public void setTransition(Symbol symbol, State next) {
+        this.transitions.put(symbol, next);
     }
 
     /**
@@ -86,7 +116,8 @@ public class State {
             // if no transition exists yet, but the state is part of the final State Machine, create a new blue state
             if (this.color == Color.RED && this.depth < StateMachineNetFlow.FUTURE_SIZE) {
                 State newState = new State(Color.BLUE, this.depth + 1);
-                this.transitions.put(transition, newState);
+                setTransition(transition, newState);
+                newState.addInLink(transition,this);
                 return newState;
             }
         }
@@ -110,12 +141,15 @@ public class State {
     }
 
     /**
-     * Merge this state with the passed other state.
+     * Merge this state with the passed red by diverting all incoming links to the red state.
      *
-     * @param other
+     * @param redState
      */
-    public void merge(State other) {
-
+    public void merge(State redState) {
+        for (Symbol inLinkSymbol : this.inLinks.keySet()) {
+            State origin = this.inLinks.get(inLinkSymbol);
+            origin.setTransition(inLinkSymbol, redState);
+        }
     }
 
     /**
