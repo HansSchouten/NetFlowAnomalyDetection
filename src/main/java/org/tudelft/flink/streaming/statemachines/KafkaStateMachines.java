@@ -16,7 +16,7 @@ import org.tudelft.flink.streaming.NetFlowReader;
 public class KafkaStateMachines {
 
     /**
-     * Whether NetFlows will be generated using a defined generation function.
+     * Whether NetFlows will be generated using a defined generation function (or be read from file).
      */
     protected static final boolean GENERATE_FLOWS = true;
 
@@ -57,7 +57,7 @@ public class KafkaStateMachines {
 
         // write Kafka stream to standard out.
         DataStream<StateMachineNetFlow> hostSequences = netFlowStream
-                .keyBy("IPPair")
+                .keyBy("srcIP")
                 .timeWindow(Time.seconds(5))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
@@ -68,7 +68,7 @@ public class KafkaStateMachines {
                 });
 
         // output the results (with a single thread, rather than in parallel)
-        hostSequences.print();//.setParallelism(1);
+        hostSequences.print().setParallelism(1);
 
         if (GENERATE_FLOWS) {
             KafkaProducer producer = new KafkaProducer(env, args);
@@ -107,7 +107,7 @@ public class KafkaStateMachines {
 
             @Override
             public void run(SourceContext<String> ctx) throws Exception {
-                NetFlowReader reader = new NetFlowReader("C:\\Users\\hanss\\Desktop\\WannaCry.binetflow");
+                NetFlowReader reader = new NetFlowReader("input\\WannaCry.binetflow");
 
                 int counter = 0;
                 while (reader.hasNext() && this.running) {

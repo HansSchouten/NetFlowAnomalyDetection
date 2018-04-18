@@ -1,16 +1,17 @@
-package org.tudelft.flink.streaming.statemachines;
+package org.tudelft.flink.streaming.statemachines.helpers;
 
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
-import org.graphstream.graph.implementations.MultiGraph;
 import org.graphstream.graph.implementations.SingleGraph;
-import org.graphstream.ui.swingViewer.Viewer;
+import org.graphstream.stream.file.FileSinkImages;
+import org.tudelft.flink.streaming.statemachines.State;
+import org.tudelft.flink.streaming.statemachines.Symbol;
 
+import java.io.IOException;
 import java.util.*;
 
 public class StateMachineVisualiser {
 
-    public boolean use_numbers = false;
     protected Graph graph;
 
     /**
@@ -38,10 +39,38 @@ public class StateMachineVisualiser {
             addBlueStates(state);
             addEdges(state);
         }
+    }
 
+    /**
+     * Show the State Machine visualisation.
+     */
+    public void showVisualisation() {
         if (this.graph.getNodeCount() > 0) {
-            // display graph
             this.graph.display();
+        }
+    }
+
+    /**
+     * Write the visualisation to file.
+     *
+     * @param stateMachineID
+     */
+    public void writeToFile(String stateMachineID) {
+        // don't write empty graphs
+        if (this.graph.getNodeCount() == 0) {
+            return;
+        }
+        // create image file sink
+        FileSinkImages sink = new FileSinkImages(FileSinkImages.OutputType.PNG, FileSinkImages.Resolutions.HD1080);
+        sink.setLayoutPolicy(FileSinkImages.LayoutPolicy.COMPUTED_FULLY_AT_NEW_IMAGE);
+        // get file path
+        String cleanID = stateMachineID.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        String path = "output\\state-machines\\machine-" + cleanID + ".png";
+        // write graph to sink
+        try {
+            sink.writeAll(this.graph, path);
+        } catch (IOException ex) {
+            System.out.println("Error while saving graph to file:\n" + ex.getMessage());
         }
     }
 
@@ -52,7 +81,7 @@ public class StateMachineVisualiser {
      */
     public void addNode(State state) {
         // only add non-empty states
-        if (state.count == 0) {
+        if (state.getCount() == 0) {
             return;
         }
         String id = Integer.toString(state.hashCode());
@@ -63,9 +92,9 @@ public class StateMachineVisualiser {
             n.addAttribute("ui.class", "root");
         }
         // add label
-        this.graph.getNode(id).setAttribute("ui.label", "[" + state.count + "]");
+        this.graph.getNode(id).setAttribute("ui.label", "[" + state.getCount() + "]");
         // give blue states, blue class
-        if (state.color == State.Color.BLUE) {
+        if (state.getColor() == State.Color.BLUE) {
             this.graph.getNode(id).setAttribute("ui.class", "blue");
         }
     }
@@ -78,7 +107,7 @@ public class StateMachineVisualiser {
     public void addBlueStates(State state) {
         for (Symbol symbol : state.getTransitions()) {
             State next = state.getState(symbol);
-            if (next.color == State.Color.BLUE) {
+            if (next.getColor() == State.Color.BLUE) {
                 this.addNode(next);
             }
         }
@@ -97,15 +126,6 @@ public class StateMachineVisualiser {
             String edgeId = fromId + "-" + toId;
             this.graph.addEdge(edgeId, fromId, toId, true);
             String label = symbol.toString();
-            // if use_numbers is enabled, use the index of the Symbol instead of the symbol itself
-            if (this.use_numbers) {
-                for (int i = 0; i < Symbol.values().length; i++) {
-                    if (Symbol.values()[i].equals(symbol)) {
-                        label = Integer.toString(i);
-                        break;
-                    }
-                }
-            }
             // add the label to the edge
             this.graph.getEdge(edgeId).setAttribute("ui.label", label);
         }

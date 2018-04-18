@@ -4,6 +4,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.streaming.util.serialization.DeserializationSchema;
 import org.apache.flink.streaming.util.serialization.SerializationSchema;
+import org.tudelft.flink.streaming.statemachines.helpers.PatternTester;
 
 public class StateMachineNetFlowSchema implements DeserializationSchema<StateMachineNetFlow>, SerializationSchema<StateMachineNetFlow> {
 

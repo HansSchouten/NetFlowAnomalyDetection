@@ -1,6 +1,9 @@
 package org.tudelft.flink.streaming.statemachines;
 
 import org.tudelft.flink.streaming.NetFlow;
+import org.tudelft.flink.streaming.statemachines.helpers.PatternFileOutput;
+import org.tudelft.flink.streaming.statemachines.helpers.PatternTester;
+import org.tudelft.flink.streaming.statemachines.helpers.StateMachineVisualiser;
 
 import java.util.*;
 
@@ -9,11 +12,20 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Number of symbols contained in a future.
      */
-    public static final int FUTURE_SIZE = 3;
+    public static int FUTURE_SIZE = 3;
     /**
-     * Visualise final State Machine.
+     * Show a visualisation of the learned State Machine.
      */
-    public static final boolean VISUALISE = true;
+    public static boolean SHOW_VISUALISATION = false;
+    /**
+     * Output a file containing the visualised State Machine.
+     */
+    public static boolean OUTPUT_VISUALISATION_FILE = true;
+    /**
+     * Output a file containing all encountered patterns (for debugging purposes).
+     */
+    public static boolean OUTPUT_PATTERN_FILE = true;
+    public PatternFileOutput patternFileOutput = new PatternFileOutput(FUTURE_SIZE);
 
     /**
      * The root node of the State Machine.
@@ -39,6 +51,10 @@ public class StateMachineNetFlow extends NetFlow {
      * If set, a predefined pattern will be used instead of the Symbols extracted from the incoming NetFlows.
      */
     public PatternTester patternTester;
+    /**
+     * The name/identifier used when mentioning or saving data regarding this State Machine.
+     */
+    public String stateMachineID;
 
     /**
      * StateMachineNetFlow constructor.
@@ -57,8 +73,10 @@ public class StateMachineNetFlow extends NetFlow {
      *
      * @param line
      */
+    @Override
     public void setFromString(String line) {
         super.setFromString(line);
+        this.stateMachineID = this.dstIP + '-' + this.dstIP;
     }
 
     /**
@@ -76,9 +94,15 @@ public class StateMachineNetFlow extends NetFlow {
         }
         this.future.add(this.currentSymbol);
 
-        // all futures start in the root, so add the root to the list of states to evaluate the current future on
+        // only start processing the future if it has a sufficient size
         if (this.future.size() == FUTURE_SIZE) {
-            instances.put(this.root.hashCode(), this.root);
+            // add future to the collection of all encountered patterns (only used for debugging)
+            if (OUTPUT_PATTERN_FILE) {
+                patternFileOutput.addPattern(this.future);
+            }
+
+            // all futures start in the root, so add the root to the list of states to evaluate the current future on
+            this.instances.put(this.root.hashCode(), this.root);
         }
 
         // evaluate this future in all state instances (increasing the occurrence frequency of this future)
@@ -143,12 +167,12 @@ public class StateMachineNetFlow extends NetFlow {
         }
 
         if (netFlow.byteCount < 200) {
-            return Symbol.LOW_SIZE;
+            return new Symbol("LOW_SIZE"); //Symbol.LOW_SIZE;
         }
         if (netFlow.byteCount < 300) {
-            return Symbol.MEDIUM_SIZE;
+            return new Symbol("MEDIUM_SIZE"); //Symbol.MEDIUM_SIZE;
         }
-        return Symbol.HIGH_SIZE;
+        return new Symbol("HIGH_SIZE"); //Symbol.HIGH_SIZE;
     }
 
     /**
@@ -158,25 +182,23 @@ public class StateMachineNetFlow extends NetFlow {
      */
     @Override
     public String toString() {
-        if (VISUALISE) {
+        if (SHOW_VISUALISATION || OUTPUT_VISUALISATION_FILE) {
             StateMachineVisualiser visualiser = new StateMachineVisualiser();
-            if (patternTester != null) {
-                visualiser.use_numbers = true;
-            }
             visualiser.visualise(this.redStates);
-            return "State Machine visualised";
-        } else {
-            String res = "";
-            for (State state : this.redStates) {
-                res += state.hashCode() + " [" + state.count + "]\n";
-                for (Symbol symbol : state.getTransitions()) {
-                    State next = state.getState(symbol);
-                    res += " " + symbol + " > " + next.hashCode() + " [" + next.count + "]\n";
-                }
-                res += "\n";
+
+            if (SHOW_VISUALISATION) {
+                visualiser.showVisualisation();
             }
-            return res;
+            if (OUTPUT_VISUALISATION_FILE) {
+                visualiser.writeToFile(this.stateMachineID);
+            }
         }
+
+        if (OUTPUT_PATTERN_FILE) {
+            this.patternFileOutput.writeToFile(this.stateMachineID);
+        }
+
+        return "";
     }
 
 }

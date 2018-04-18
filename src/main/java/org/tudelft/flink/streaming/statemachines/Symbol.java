@@ -1,8 +1,27 @@
 package org.tudelft.flink.streaming.statemachines;
 
-/**
- * An enumeration containing all possible states.
- */
-public enum Symbol {
-    LOW_SIZE, MEDIUM_SIZE, HIGH_SIZE;
+public class Symbol {
+
+    protected String symbol;
+
+    public Symbol(String symbol) {
+        this.symbol = symbol;
+    }
+
+    @Override
+    public String toString() {
+        return this.symbol;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.symbol.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object other)
+    {
+        return this.symbol.equals(other.toString());
+    }
+
 }

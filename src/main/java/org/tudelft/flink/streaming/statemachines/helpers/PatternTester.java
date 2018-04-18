@@ -1,4 +1,6 @@
-package org.tudelft.flink.streaming.statemachines;
+package org.tudelft.flink.streaming.statemachines.helpers;
+
+import org.tudelft.flink.streaming.statemachines.Symbol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +27,9 @@ public class PatternTester {
      */
     public void setPattern(int[] pattern) {
         this.currentPattern = new ArrayList<>();
-        Symbol[] all = Symbol.values();
         for (int num : pattern) {
-            this.currentPattern.add(all[num]);
+            Symbol symbol = new Symbol(Integer.toString(num));
+            this.currentPattern.add(symbol);
         }
         this.currentIndex = 0;
     }

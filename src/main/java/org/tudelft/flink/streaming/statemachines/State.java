@@ -44,6 +44,14 @@ public class State {
         this.depth = depth;
     }
 
+    public int getCount() {
+        return this.count;
+    }
+
+    public Color getColor() {
+        return this.color;
+    }
+
     /**
      * Increase the occurrence frequency of this future in this state's sketch.
      *
