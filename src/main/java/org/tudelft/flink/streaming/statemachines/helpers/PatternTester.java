@@ -15,7 +15,7 @@ public class PatternTester {
      */
     public PatternTester() {
         int[] pattern = new int[] {
-            0,0,1,1,2,2
+            0,1
         };
         setPattern(pattern);
     }

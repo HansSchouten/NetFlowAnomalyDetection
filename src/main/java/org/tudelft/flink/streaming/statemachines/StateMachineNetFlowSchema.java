@@ -5,6 +5,7 @@ import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.streaming.util.serialization.DeserializationSchema;
 import org.apache.flink.streaming.util.serialization.SerializationSchema;
 import org.tudelft.flink.streaming.statemachines.helpers.PatternTester;
+import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
 public class StateMachineNetFlowSchema implements DeserializationSchema<StateMachineNetFlow>, SerializationSchema<StateMachineNetFlow> {
 
@@ -21,6 +22,11 @@ public class StateMachineNetFlowSchema implements DeserializationSchema<StateMac
             flow.patternTester = new PatternTester();
         }
         flow.setFromString(new String(message));
+
+        // TODO: read SymbolConfig from getGlobalJobParameters
+        // https://brewing.codes/2017/10/24/flink-additional-data/
+        flow.symbolConfig = new SymbolConfig();
+
         return flow;
     }
 

@@ -1,5 +1,6 @@
 package org.tudelft.flink.streaming.statemachines;
 
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.functions.ReduceFunction;
 
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
@@ -12,6 +13,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
 import org.tudelft.flink.streaming.KafkaProducer;
 import org.tudelft.flink.streaming.NetFlowReader;
+import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
 public class KafkaStateMachines {
 
@@ -79,6 +81,18 @@ public class KafkaStateMachines {
         env.execute("Kafka NetFlow StateMachines");
     }
 
+    /**
+     * Abstract class for a custom user configuration object registered at the execution config.
+     *
+     * This user config is accessible at runtime through
+     * getRuntimeContext().getExecutionConfig().GlobalJobParameters()
+     */
+    public static class JobParameters extends ExecutionConfig.GlobalJobParameters {
+
+        public SymbolConfig config;
+
+    }
+
     public static SourceFunction<String> getStaticSourceFunction() {
         return new SourceFunction<String>() {
             private static final long serialVersionUID = 6369260225318862378L;
@@ -107,21 +121,15 @@ public class KafkaStateMachines {
 
             @Override
             public void run(SourceContext<String> ctx) throws Exception {
-                NetFlowReader reader = new NetFlowReader("input\\WannaCry.binetflow");
+                NetFlowReader reader = new NetFlowReader("input\\WannaCry.uninetflow");
 
-                int counter = 0;
                 while (reader.hasNext() && this.running) {
                     String flow = reader.getNextJSONFlow();
-                    //System.out.println(flow);
+
                     if (flow != null) {
-                        counter++;
                         ctx.collect(flow);
-                        //Thread.sleep(1);
                     }
                 }
-
-                System.out.println(counter);
-                //System.exit(2);
             }
 
             @Override

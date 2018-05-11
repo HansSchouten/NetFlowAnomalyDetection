@@ -4,6 +4,7 @@ import org.tudelft.flink.streaming.NetFlow;
 import org.tudelft.flink.streaming.statemachines.helpers.PatternFileOutput;
 import org.tudelft.flink.streaming.statemachines.helpers.PatternTester;
 import org.tudelft.flink.streaming.statemachines.helpers.StateMachineVisualiser;
+import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
 import java.util.*;
 
@@ -51,6 +52,10 @@ public class StateMachineNetFlow extends NetFlow {
      * If set, a predefined pattern will be used instead of the Symbols extracted from the incoming NetFlows.
      */
     public PatternTester patternTester;
+    /**
+     * The symbol configuration that is used to map NetFlows to symbols.
+     */
+    public SymbolConfig symbolConfig;
     /**
      * The name/identifier used when mentioning or saving data regarding this State Machine.
      */
@@ -166,13 +171,7 @@ public class StateMachineNetFlow extends NetFlow {
             return this.patternTester.getNext();
         }
 
-        if (netFlow.byteCount < 200) {
-            return new Symbol("LOW_SIZE"); //Symbol.LOW_SIZE;
-        }
-        if (netFlow.byteCount < 300) {
-            return new Symbol("MEDIUM_SIZE"); //Symbol.MEDIUM_SIZE;
-        }
-        return new Symbol("HIGH_SIZE"); //Symbol.HIGH_SIZE;
+        return this.symbolConfig.getSymbol(netFlow);
     }
 
     /**

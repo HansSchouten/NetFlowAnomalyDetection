@@ -47,7 +47,8 @@ public class NetFlowReader {
             jsonFlowData.put(getArg(11, args[7]));
             jsonFlowData.put(getArg(12, args[6]));
             jsonFlowData.put(getArg(21, "0"));
-            jsonFlowData.put(getArg(22, "1")); //Integer.toString(Math.round(Float.valueOf(args[1])))  ));
+            Long val = Long.valueOf(Math.round(Float.valueOf(args[1])));
+            jsonFlowData.put(getArg(22, val.toString()));
 
             JSONArray jsonFlowDataInner = new JSONArray();
             jsonFlowDataInner.put(jsonFlowData);
