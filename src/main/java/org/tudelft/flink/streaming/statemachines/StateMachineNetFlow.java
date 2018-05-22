@@ -2,7 +2,7 @@ package org.tudelft.flink.streaming.statemachines;
 
 import org.tudelft.flink.streaming.NetFlow;
 import org.tudelft.flink.streaming.statemachines.helpers.PatternFileOutput;
-import org.tudelft.flink.streaming.statemachines.helpers.StateMachineVisualiser;
+import org.tudelft.flink.streaming.statemachines.visualisation.BlueFringeVisualiser;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
 import java.util.*;
@@ -24,7 +24,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Output a file containing all encountered patterns (for debugging purposes).
      */
-    public static boolean OUTPUT_PATTERN_FILE = true;
+    public static boolean OUTPUT_PATTERN_FILE = false;
     public PatternFileOutput patternFileOutput = new PatternFileOutput(FUTURE_SIZE);
 
     /**
@@ -192,7 +192,7 @@ public class StateMachineNetFlow extends NetFlow {
         if (SHOW_VISUALISATION || OUTPUT_VISUALISATION_FILE) {
             log(this.stateMachineID + " has " + this.flow_counter + " flows");
 
-            StateMachineVisualiser visualiser = new StateMachineVisualiser();
+            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
             visualiser.visualise(this.redStates);
 
             if (SHOW_VISUALISATION) {

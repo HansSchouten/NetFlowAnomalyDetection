@@ -26,7 +26,7 @@ public class KafkaStateMachines {
     /**
      * Whether the arguments of the NetFlow will be ignored and instead the pattern defined in PatternTester will be used.
      */
-    protected static final boolean USE_PATTERN_TESTER = true;
+    protected static final boolean USE_PATTERN_TESTER = false;
 
     public static void main(String[] args) throws Exception {
         // parse input arguments
