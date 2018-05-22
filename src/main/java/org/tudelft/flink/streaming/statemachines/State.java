@@ -122,7 +122,7 @@ public class State {
             return this.transitions.get(transition);
         } else {
             // if no transition exists yet, but the state is part of the final State Machine, create a new blue state
-            if (this.color == Color.RED && this.depth < StateMachineNetFlow.FUTURE_SIZE) {
+            if (this.color == Color.RED && this.depth < Math.max(StateMachineNetFlow.FUTURE_SIZE, 20)) {
                 State newState = new State(Color.BLUE, this.depth + 1);
                 setTransition(transition, newState);
                 newState.addInLink(transition,this);

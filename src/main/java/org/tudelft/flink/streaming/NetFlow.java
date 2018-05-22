@@ -17,6 +17,7 @@ public class NetFlow implements Serializable {
     public String srcPort;
     public String dstPort;
     public String IPPair;
+    public String symbol;
     public long start;
     public long end;
 
@@ -42,7 +43,13 @@ public class NetFlow implements Serializable {
                 String value = parameter.get("V").asText();
                 storeElement(id, value);
             }
-            this.IPPair = this.srcIP + "," + this.dstIP;
+
+            // store ip pair (with lowest ip first)
+            if (this.srcIP.hashCode() < this.dstIP.hashCode()) {
+                this.IPPair = this.srcIP + "," + this.dstIP;
+            } else {
+                this.IPPair = this.dstIP + "," + this.srcIP;
+            }
         }
     }
 
@@ -55,6 +62,9 @@ public class NetFlow implements Serializable {
      */
     protected void storeElement(Integer id, String value) {
         switch (id) {
+            case 0:
+                this.symbol = value;
+                break;
             case 1:
                 this.byteCount = Long.decode(value);
                 break;

@@ -13,6 +13,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
 import org.tudelft.flink.streaming.KafkaProducer;
 import org.tudelft.flink.streaming.NetFlowReader;
+import org.tudelft.flink.streaming.statemachines.helpers.PatternTester;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
 public class KafkaStateMachines {
@@ -25,7 +26,7 @@ public class KafkaStateMachines {
     /**
      * Whether the arguments of the NetFlow will be ignored and instead the pattern defined in PatternTester will be used.
      */
-    protected static final boolean USE_PATTERN_TESTER = false;
+    protected static final boolean USE_PATTERN_TESTER = true;
 
     public static void main(String[] args) throws Exception {
         // parse input arguments
@@ -59,8 +60,8 @@ public class KafkaStateMachines {
 
         // write Kafka stream to standard out.
         DataStream<StateMachineNetFlow> hostSequences = netFlowStream
-                .keyBy("srcIP")
-                .timeWindow(Time.seconds(5))
+                .keyBy("IPPair")
+                .timeWindow(Time.seconds(10))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
                     public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
@@ -74,7 +75,11 @@ public class KafkaStateMachines {
 
         if (GENERATE_FLOWS) {
             KafkaProducer producer = new KafkaProducer(env, args);
-            producer.addSourceFunction(getFileSourceFunction());
+            if (USE_PATTERN_TESTER) {
+                producer.addSourceFunction(getStaticSourceFunction());
+            } else {
+                producer.addSourceFunction(getFileSourceFunction());
+            }
         }
 
         // trigger execution
@@ -100,8 +105,11 @@ public class KafkaStateMachines {
 
             @Override
             public void run(SourceContext<String> ctx) throws Exception {
+                PatternTester tester = new PatternTester();
+
                 while (this.running) {
-                    String data = "{\"AgentID\":\"127.0.0.1\",\"Header\":{\"Version\":9,\"Count\":2,\"SysUpTime\":0,\"UNIXSecs\":1521118700,\"SeqNum\":1602,\"SrcID\":0},\"DataSets\":[[{\"I\":8,\"V\":\"10.0.0.2\"},{\"I\":12,\"V\":\"10.0.0.3\"},{\"I\":15,\"V\":\"0.0.0.0\"},{\"I\":10,\"V\":3},{\"I\":14,\"V\":5},{\"I\":2,\"V\":\"0x000000f5\"},{\"I\":1,\"V\":\"0x000000b6\"},{\"I\":7,\"V\":4242},{\"I\":11,\"V\":80},{\"I\":6,\"V\":\"0x00\"},{\"I\":4,\"V\":17},{\"I\":5,\"V\":1},{\"I\":17,\"V\":\"0x0003\"},{\"I\":16,\"V\":\"0x0002\"},{\"I\":9,\"V\":32},{\"I\":13,\"V\":31},{\"I\":21,\"V\":40536924},{\"I\":22,\"V\":40476924}]]}";
+                    Symbol next = tester.getNext();
+                    String data = "{\"AgentID\":\"127.0.0.1\",\"Header\":{\"Version\":9,\"Count\":2,\"SysUpTime\":0,\"UNIXSecs\":1521118700,\"SeqNum\":1602,\"SrcID\":0},\"DataSets\":[[{\"I\":0,\"V\":\"" + next.toString() + "\"},{\"I\":8,\"V\":\"10.0.0.2\"},{\"I\":12,\"V\":\"10.0.0.3\"},{\"I\":15,\"V\":\"0.0.0.0\"},{\"I\":10,\"V\":3},{\"I\":14,\"V\":5},{\"I\":2,\"V\":\"0x000000f5\"},{\"I\":1,\"V\":\"0x000000b6\"},{\"I\":7,\"V\":4242},{\"I\":11,\"V\":80},{\"I\":6,\"V\":\"0x00\"},{\"I\":4,\"V\":17},{\"I\":5,\"V\":1},{\"I\":17,\"V\":\"0x0003\"},{\"I\":16,\"V\":\"0x0002\"},{\"I\":9,\"V\":32},{\"I\":13,\"V\":31},{\"I\":21,\"V\":40536924},{\"I\":22,\"V\":40476924}]]}";
                     ctx.collect(data);
                     Thread.sleep(1);
                 }
@@ -121,10 +129,13 @@ public class KafkaStateMachines {
 
             @Override
             public void run(SourceContext<String> ctx) throws Exception {
-                NetFlowReader reader = new NetFlowReader("input\\WannaCry.uninetflow");
+                NetFlowReader reader = new NetFlowReader("input\\WannaCry.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+                //NetFlowReader reader = new NetFlowReader("input\\internet-traffic_tshark.txt", NetFlowReader.Format.TSHARK);
+                //NetFlowReader reader = new NetFlowReader("input\\15min-skype-call_tshark.txt", NetFlowReader.Format.TSHARK);
 
                 while (reader.hasNext() && this.running) {
                     String flow = reader.getNextJSONFlow();
+                    //System.out.println(flow);
 
                     if (flow != null) {
                         ctx.collect(flow);

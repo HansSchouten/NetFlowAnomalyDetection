@@ -2,7 +2,6 @@ package org.tudelft.flink.streaming.statemachines;
 
 import org.tudelft.flink.streaming.NetFlow;
 import org.tudelft.flink.streaming.statemachines.helpers.PatternFileOutput;
-import org.tudelft.flink.streaming.statemachines.helpers.PatternTester;
 import org.tudelft.flink.streaming.statemachines.helpers.StateMachineVisualiser;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
@@ -13,7 +12,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Number of symbols contained in a future.
      */
-    public static int FUTURE_SIZE = 3;
+    public static int FUTURE_SIZE = 5;
     /**
      * Show a visualisation of the learned State Machine.
      */
@@ -49,10 +48,6 @@ public class StateMachineNetFlow extends NetFlow {
      */
     public List<State> redStates;
     /**
-     * If set, a predefined pattern will be used instead of the Symbols extracted from the incoming NetFlows.
-     */
-    public PatternTester patternTester;
-    /**
      * The symbol configuration that is used to map NetFlows to symbols.
      */
     public SymbolConfig symbolConfig;
@@ -60,6 +55,10 @@ public class StateMachineNetFlow extends NetFlow {
      * The name/identifier used when mentioning or saving data regarding this State Machine.
      */
     public String stateMachineID;
+    /**
+     * Count how many flows are reduced into this StateMachineNetFlow.
+     */
+    public int flow_counter = 0;
 
     /**
      * StateMachineNetFlow constructor.
@@ -81,7 +80,7 @@ public class StateMachineNetFlow extends NetFlow {
     @Override
     public void setFromString(String line) {
         super.setFromString(line);
-        this.stateMachineID = this.dstIP + '-' + this.dstIP;
+        this.stateMachineID = this.srcIP + "-" + this.dstIP;
     }
 
     /**
@@ -112,6 +111,15 @@ public class StateMachineNetFlow extends NetFlow {
 
         // evaluate this future in all state instances (increasing the occurrence frequency of this future)
         evaluateInstances();
+
+        // increase the counter, keeping track of how many flows are reduced into this object
+        this.flow_counter++;
+
+        // LOG
+        if (this.flow_counter == 1) {
+            log(this.stateMachineID + " reducing first NetFlow");
+            log("");
+        }
     }
 
     /**
@@ -167,8 +175,8 @@ public class StateMachineNetFlow extends NetFlow {
      */
     protected Symbol getSymbol(StateMachineNetFlow netFlow) {
         // if a pattern tester is set, return the next symbol from the predefined pattern
-        if (this.patternTester != null) {
-            return this.patternTester.getNext();
+        if (this.symbol != null) {
+            return new Symbol(netFlow.symbol);
         }
 
         return this.symbolConfig.getSymbol(netFlow);
@@ -182,6 +190,8 @@ public class StateMachineNetFlow extends NetFlow {
     @Override
     public String toString() {
         if (SHOW_VISUALISATION || OUTPUT_VISUALISATION_FILE) {
+            log(this.stateMachineID + " has " + this.flow_counter + " flows");
+
             StateMachineVisualiser visualiser = new StateMachineVisualiser();
             visualiser.visualise(this.redStates);
 
@@ -198,6 +208,10 @@ public class StateMachineNetFlow extends NetFlow {
         }
 
         return "";
+    }
+
+    public void log(String message) {
+        System.out.println(message);
     }
 
 }

@@ -6,6 +6,10 @@ import org.apache.sling.commons.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class NetFlowReader {
 
@@ -13,7 +17,15 @@ public class NetFlowReader {
 
     protected String nextLine;
 
-    public NetFlowReader(String path) throws Exception {
+    protected Format format;
+
+    public enum Format {
+        STRATOSPHERE,
+        TSHARK
+    }
+
+    public NetFlowReader(String path, Format format) throws Exception {
+        this.format = format;
         File file = new File(path);
         this.reader = new BufferedReader(new FileReader(file));
     }
@@ -34,6 +46,45 @@ public class NetFlowReader {
      * @return
      */
     public String getNextJSONFlow() {
+        if (this.format == Format.STRATOSPHERE) {
+            return getNextStratosphere();
+        } else if (this.format == Format.TSHARK) {
+            return getNextTShark();
+        }
+        return null;
+    }
+
+    public String getNextTShark() {
+        JSONObject jsonFlow = new JSONObject();
+
+        String[] args_raw = this.nextLine.split(" ");
+        List<String> args = new ArrayList<String>(Arrays.asList(args_raw));
+        args.removeAll(Collections.singleton(null));
+        args.removeAll(Collections.singleton(""));
+
+        try {
+            JSONArray jsonFlowData = new JSONArray();
+            jsonFlowData.put(getArg(1, "0x" + Long.toHexString(Long.valueOf(args.get(6)))));
+            jsonFlowData.put(getArg(7, args.get(7)));
+            jsonFlowData.put(getArg(8, args.get(2)));
+            jsonFlowData.put(getArg(11, args.get(8)));
+            jsonFlowData.put(getArg(12, args.get(4)));
+            jsonFlowData.put(getArg(21, "0"));
+            Long val = Long.valueOf(Math.round(Float.valueOf(args.get(1))));
+            jsonFlowData.put(getArg(22, val.toString()));
+
+            JSONArray jsonFlowDataInner = new JSONArray();
+            jsonFlowDataInner.put(jsonFlowData);
+
+            jsonFlow.put("DataSets", jsonFlowDataInner);
+        } catch (Exception ex) {
+            return null;
+        }
+
+        return jsonFlow.toString();
+    }
+
+    public String getNextStratosphere() {
         JSONObject jsonFlow = new JSONObject();
 
         String[] args = this.nextLine.split(",");
