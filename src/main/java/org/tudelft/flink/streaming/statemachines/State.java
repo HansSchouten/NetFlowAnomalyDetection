@@ -10,7 +10,7 @@ public class State {
     /**
      * the number of futures processed by a state at which the state is merged or becomes a red state.
      */
-    public final int SIGNIFICANCE_BOUNDARY = 150;
+    public final int SIGNIFICANCE_BOUNDARY = 500;
     /**
      * the upper bound of the Chi-distance below which the sketches are regarded as similar.
      */
@@ -142,6 +142,15 @@ public class State {
     }
 
     /**
+     * Return whether this state is the root state.
+     *
+     * @return
+     */
+    public boolean isRoot() {
+        return this.depth == 0;
+    }
+
+    /**
      * Change the color of this state to red.
      */
     public void changeToRed() {
@@ -167,9 +176,35 @@ public class State {
      * @return
      */
     public boolean similarTo(State redState) {
-        long[] sketch1 = toLongArray(CountMinSketch.serialize(this.sketch));
-        long[] sketch2 = toLongArray(CountMinSketch.serialize(redState.sketch));
-        return chiSquare(sketch1, sketch2) < CHI_SIMILARITY;
+        long[] sketch1 = this.getSketchVector();
+        long[] sketch2 = redState.getSketchVector();
+
+        System.out.println(this.hashCode() + ":");
+        for (int i = 0; i < sketch1.length; i++) {
+            System.out.print(sketch1[i] + ",");
+        }
+        System.out.println("");
+        System.out.println(redState.hashCode() + ":");
+        for (int i = 0; i < sketch2.length; i++) {
+            System.out.print(sketch2[i] + ",");
+        }
+        System.out.println("");
+        System.out.println(">" + cosineSimilarity(sketch1, sketch2));
+        return cosineSimilarity(sketch1, sketch2) > 0.92;
+    }
+
+    public long[] getSketchVector() {
+        long[] serialized_long = toLongArray(CountMinSketch.serialize(this.sketch));
+        long[] vector = new long[DEPTH * WIDTH];
+        // add all values (except the first two and after the first two, each WIDTH-th value since these are the hashes)
+        int c = 0;
+        for (int i = 2; i < serialized_long.length - 1; i++) {
+            if ((i - 2) % (WIDTH + 1) != 0) {
+                vector[c] = serialized_long[i];
+                c++;
+            }
+        }
+        return vector;
     }
 
     /**
@@ -178,7 +213,7 @@ public class State {
      * @param byteArray
      * @return
      */
-    public long[] toLongArray(byte[] byteArray) {
+    protected long[] toLongArray(byte[] byteArray) {
         long[] longArray = new long[byteArray.length / 8];
         for (int i = 2; i < byteArray.length / 8; i++) {
             byte[] longBytes = Arrays.copyOfRange(byteArray, i*8, (i + 1)*8);
@@ -195,14 +230,41 @@ public class State {
      * @param sketch2
      * @return The Chi Square distance between both sketches.
      */
-    protected double chiSquare(long[] sketch1, long[] sketch2){
+    protected double chiSquare(long[] sketch1, long[] sketch2) {
+        //double[] norm1 = normalize(sketch1);
+        //double[] norm2 = normalize(sketch2);
+
         double r = 0;
         for (int i = 0; i < sketch1.length; i++) {
-            double t = sketch1[i] + sketch2[i];
-            if(t != 0)
-                r += Math.pow(sketch1[i] - sketch2[i], 2) / t;
+            r += Math.pow(sketch1[i] - sketch2[i], 2) / sketch2[i];
         }
-        return 0.5 * r;
+        return r / sketch1.length;
+    }
+
+    protected double cosineSimilarity(long[] v1, long[] v2) {
+        double dotProduct = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
+        for (int i = 0; i < v1.length; i++) {
+            dotProduct += v1[i] * v2[i];
+            normA += Math.pow(v1[i], 2);
+            normB += Math.pow(v2[i], 2);
+        }
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    protected double[] normalize(long[] vector) {
+        double max = 0;
+        for (int i = 0; i < vector.length; i++) {
+            if (vector[i] > max) {
+                max = vector[i];
+            }
+        }
+        double[] norm = new double[vector.length];
+        for (int i = 0; i < vector.length; i++) {
+            norm[i] = vector[i] / max;
+        }
+        return norm;
     }
 
 }

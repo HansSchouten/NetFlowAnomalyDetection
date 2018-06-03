@@ -24,14 +24,18 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
      */
     public void visualise(List<State> redStates) {
         // add all red states
+        System.out.println("Red states:");
         for (State state : redStates) {
             addState(state);
         }
-        // add all blue states and edges from each red state
+        // add all blue states
         for (State state : redStates) {
             if (! this.only_red) {
                 addBlueStates(state);
             }
+        }
+        // add all edges from the red states
+        for (State state : redStates) {
             addTransitions(state);
         }
     }
@@ -55,10 +59,6 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
      * @param state
      */
     protected void addState(State state) {
-        // skip empty states
-        if (state.getCount() == 0) {
-            return;
-        }
         // define the id of this state
         String id = Integer.toString(state.hashCode());
         // define css class

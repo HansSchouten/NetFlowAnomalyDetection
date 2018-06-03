@@ -69,6 +69,7 @@ public class PatternTester {
             Symbol symbol = new Symbol(Integer.toString(num));
             this.currentPattern.add(symbol);
         }
+
         this.currentIndex = 0;
     }
 

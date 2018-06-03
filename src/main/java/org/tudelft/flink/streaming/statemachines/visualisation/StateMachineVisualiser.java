@@ -47,7 +47,7 @@ public class StateMachineVisualiser {
             return;
         }
         // create image file sink
-        FileSinkImages sink = new FileSinkImages(FileSinkImages.OutputType.PNG, FileSinkImages.Resolutions.HD1080);
+        FileSinkImages sink = new FileSinkImages(FileSinkImages.OutputType.PNG, FileSinkImages.Resolutions.HD720);
         sink.setLayoutPolicy(FileSinkImages.LayoutPolicy.COMPUTED_FULLY_AT_NEW_IMAGE);
         sink.setRenderer(FileSinkImages.RendererType.SCALA);
         // write graph to sink
@@ -95,7 +95,7 @@ public class StateMachineVisualiser {
      */
     protected void addTransition(String from, String to, String label) {
         // generate unique id for this edge
-        String edgeId = from + "-" + to;
+        String edgeId = from + "-" + to + "-" + label;
         // add edge
         this.graph.addEdge(edgeId, from, to, true);
         // add the label to the edge
