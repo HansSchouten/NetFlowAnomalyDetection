@@ -3,6 +3,8 @@ package org.tudelft.flink.streaming.statemachines.visualisation;
 import org.tudelft.flink.streaming.statemachines.State;
 import org.tudelft.flink.streaming.statemachines.Symbol;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 
 public class BlueFringeVisualiser extends StateMachineVisualiser {
@@ -24,7 +26,6 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
      */
     public void visualise(List<State> redStates) {
         // add all red states
-        System.out.println("Red states:");
         for (State state : redStates) {
             addState(state);
         }
@@ -48,7 +49,8 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
     public void writeToFile(String stateMachineID) {
         // get file path
         String cleanID = stateMachineID.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
-        String path = "output\\state-machines\\machine-" + cleanID + ".png";
+        String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+        String path = "output\\state-machines\\machine-" + cleanID + "-" + timeStamp + ".png";
         // write the graph to file
         super.writeToFile(path);
     }
@@ -68,6 +70,9 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
         }
         // define the label
         String label = "[" + state.getCount() + "]";
+        if (state.getLabel() != null) {
+            label = state.getLabel();
+        }
         // add the node to the graph
         super.addState(id, cssClass, label);
     }
@@ -79,7 +84,7 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
      */
     protected void addBlueStates(State state) {
         for (Symbol symbol : state.getTransitions()) {
-            State next = state.getState(symbol);
+            State next = state.getState(symbol, null);
             if (next.getColor() == State.Color.BLUE) {
                 this.addState(next);
             }
@@ -94,7 +99,7 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
     protected void addTransitions(State origin) {
         for (Symbol symbol : origin.getTransitions()) {
             String fromId = Integer.toString(origin.hashCode());
-            State to = origin.getState(symbol);
+            State to = origin.getState(symbol, null);
             if (to.getColor() == State.Color.BLUE && this.only_red) {
                 continue;
             }

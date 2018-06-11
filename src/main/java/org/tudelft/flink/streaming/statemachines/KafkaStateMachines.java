@@ -97,7 +97,7 @@ public class KafkaStateMachines {
         // write Kafka stream to standard out.
         DataStream<StateMachineNetFlow> hostSequences = netFlowStream
                 .keyBy("IPPair")
-                .timeWindow(Time.seconds(30))
+                .timeWindow(Time.seconds(1800))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
                     public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {

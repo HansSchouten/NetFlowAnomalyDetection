@@ -7,7 +7,7 @@ public class RunValidation {
     }
 
     public static void visualisePAutomac() throws Exception {
-        String path = "input\\pautomac\\set-I\\0-1pautomac_model.txt";
+        String path = "input\\pautomac\\set-III\\1-1pautomac_model.txt";
         VisualisePAutomac visualiser = new VisualisePAutomac();
         visualiser.visualise(path);
     }

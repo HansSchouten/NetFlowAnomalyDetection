@@ -64,6 +64,8 @@ public class StateMachineNetFlow extends NetFlow {
      */
     public int skip_counter = 0;
 
+    public char current_char = 'A';
+
     /**
      * StateMachineNetFlow constructor.
      */
@@ -87,6 +89,8 @@ public class StateMachineNetFlow extends NetFlow {
             log(this.stateMachineID + " reducing first NetFlow");
 
             this.root = new State(State.Color.RED, 0);
+            this.root.setLabel(String.valueOf(this.current_char));
+            nextChar();
             this.future = new LinkedList<>();
 
             this.instances = new HashMap<>();
@@ -176,26 +180,38 @@ public class StateMachineNetFlow extends NetFlow {
             // merge or color the state if a significant amount of futures are captured in this state
             if (instance.getColor() == State.Color.BLUE && instance.isSignificant()) {
                 System.out.println("Significant State: " + instance.hashCode());
-                boolean is_merged = false;
-                for (State redState : this.redStates) {
-                    if (instance.similarTo(redState)) {
-                        // merge instance with red state (pointing all incoming transitions to the red state instead)
-                        instance.merge(redState);
-                        // continue evaluation in the red state the instance has merged with
-                        instance = redState;
-                        is_merged = true;
-                        break;
-                    }
-                }
-                // color state red if it could not be merged with any other red state
-                if (! is_merged) {
+
+                State mostSimilarState = instance.getMostSimilarState(this.redStates);
+                if (mostSimilarState == null) {
+                    // color state red if it could not be merged with any other red state
                     instance.changeToRed();
                     this.redStates.add(instance);
+                } else {
+                    // merge instance with red state (pointing all incoming transitions to the red state instead)
+                    instance.merge(mostSimilarState);
+                    // continue evaluation in the red state the instance has merged with
+                    instance = mostSimilarState;
                 }
+
+                // VISUALISE STEPS
+                BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
+                visualiser.visualise(this.redStates);
+                visualiser.showVisualisation();
+                visualiser.writeToFile(this.stateMachineID);
             }
 
             // get the next state in the direction of the symbol of the consumed NetFlow
-            State next = instance.getState(this.currentSymbol);
+            State next = instance.getState(this.currentSymbol, this.current_char);
+            if (next != null && next.new_state) {
+                // VISUALISE STEPS
+                BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
+                visualiser.visualise(this.redStates);
+                visualiser.showVisualisation();
+                visualiser.writeToFile(this.stateMachineID);
+                next.new_state = false;
+
+                nextChar();
+            }
 
             // if a state in the direction of the current symbol exists, add the next state to instances
             if (next != null) {
@@ -232,7 +248,8 @@ public class StateMachineNetFlow extends NetFlow {
             log(this.stateMachineID + " has " + this.flow_counter + " flows");
             log("#skipped sequences due to stop symbol: " + Integer.toString(this.skip_counter));
 
-            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
+            /*
+            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
             visualiser.visualise(this.redStates);
 
             if (SHOW_VISUALISATION) {
@@ -241,6 +258,7 @@ public class StateMachineNetFlow extends NetFlow {
             if (OUTPUT_VISUALISATION_FILE) {
                 visualiser.writeToFile(this.stateMachineID);
             }
+            */
         }
 
         if (OUTPUT_PATTERN_FILE) {
@@ -252,6 +270,17 @@ public class StateMachineNetFlow extends NetFlow {
 
     public void log(String message) {
         System.out.println(message);
+    }
+
+    /**
+     * Update the current char to the next character of the alphabet.
+     *
+     * @return
+     */
+    public char nextChar() {
+        int value = this.current_char;
+        this.current_char = Character.valueOf((char) (value + 1));
+        return this.current_char;
     }
 
 }

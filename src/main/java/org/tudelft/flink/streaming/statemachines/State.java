@@ -10,13 +10,15 @@ public class State {
     /**
      * the number of futures processed by a state at which the state is merged or becomes a red state.
      */
-    public final int SIGNIFICANCE_BOUNDARY = 500;
+    public final int SIGNIFICANCE_BOUNDARY = 1000;
     /**
      * the upper bound of the Chi-distance below which the sketches are regarded as similar.
      */
     protected double CHI_SIMILARITY = 0.5;
+    protected double COSINE_SIMILARITY = 0.95;
     protected int DEPTH = 10;
     protected int WIDTH = 100;
+    public boolean new_state = false;
 
     public enum Color {
         RED,
@@ -29,6 +31,7 @@ public class State {
     protected Color color;
     protected int count;
     protected int depth;
+    protected String label;
 
     /**
      * State constructor.
@@ -50,6 +53,14 @@ public class State {
 
     public Color getColor() {
         return this.color;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return this.label;
     }
 
     /**
@@ -115,17 +126,22 @@ public class State {
      * Return the state in the direction of the given transition symbol.
      *
      * @param transition
+     * @param current_char
      * @return
      */
-    public State getState(Symbol transition) {
+    public State getState(Symbol transition, Character current_char) {
         if (this.transitions.containsKey(transition)) {
             return this.transitions.get(transition);
         } else {
             // if no transition exists yet, but the state is part of the final State Machine, create a new blue state
             if (this.color == Color.RED && this.depth < Math.max(StateMachineNetFlow.FUTURE_SIZE, 20)) {
                 State newState = new State(Color.BLUE, this.depth + 1);
+                if (current_char != null) {
+                    newState.setLabel(String.valueOf(current_char));
+                }
                 setTransition(transition, newState);
                 newState.addInLink(transition,this);
+                newState.new_state = true;
                 return newState;
             }
         }
@@ -170,27 +186,64 @@ public class State {
     }
 
     /**
-     * Return whether the distribution of futures passed through both states are similar enough to merge.
+     * Return the state which has a sketch that is most similar to this state's sketch.
+     * Returns null however, if no state similarity passes the threshold.
      *
-     * @param redState
+     * @param otherStates
      * @return
      */
-    public boolean similarTo(State redState) {
+    public State getMostSimilarState(List<State> otherStates) {
+        double most_similar = 0;
+        State mostSimilarState = null;
+        // find most similar state
+        for (State other : otherStates) {
+            double similarity = getSimilarity(other);
+            if (similarity > most_similar) {
+                mostSimilarState = other;
+                most_similar = similarity;
+            }
+        }
+        // return most similar state if it exceeds the boundary
+        if (most_similar > COSINE_SIMILARITY) {
+            return mostSimilarState;
+        }
+        return null;
+    }
+
+    /**
+     * Return whether the distribution of futures passed through both states are similar enough to merge.
+     *
+     * @param other
+     * @return
+     */
+    public boolean similarTo(State other) {
+        return getSimilarity(other) > COSINE_SIMILARITY;
+    }
+
+    /**
+     * Return the similarity of this state's sketch compared to the given other state's sketch.
+     *
+     * @param other
+     * @return
+     */
+    public double getSimilarity(State other) {
         long[] sketch1 = this.getSketchVector();
-        long[] sketch2 = redState.getSketchVector();
+        long[] sketch2 = other.getSketchVector();
 
         System.out.println(this.hashCode() + ":");
         for (int i = 0; i < sketch1.length; i++) {
             System.out.print(sketch1[i] + ",");
         }
         System.out.println("");
-        System.out.println(redState.hashCode() + ":");
+        System.out.println(other.hashCode() + ":");
         for (int i = 0; i < sketch2.length; i++) {
             System.out.print(sketch2[i] + ",");
         }
+
+        double similarity = cosineSimilarity(sketch1, sketch2);
         System.out.println("");
-        System.out.println(">" + cosineSimilarity(sketch1, sketch2));
-        return cosineSimilarity(sketch1, sketch2) > 0.92;
+        System.out.println("SIM: " + similarity);
+        return similarity;
     }
 
     public long[] getSketchVector() {
