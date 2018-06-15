@@ -83,7 +83,7 @@ public class KafkaStateMachines {
         //env.enableCheckpointing(500, CheckpointingMode.EXACTLY_ONCE);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
+        env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
 
         // create Kafka consumer
         FlinkKafkaConsumer010<StateMachineNetFlow> kafkaConsumer = new FlinkKafkaConsumer010<>(
@@ -97,7 +97,7 @@ public class KafkaStateMachines {
         // write Kafka stream to standard out.
         DataStream<StateMachineNetFlow> hostSequences = netFlowStream
                 .keyBy("IPPair")
-                .timeWindow(Time.seconds(1800))
+                .timeWindow(Time.seconds(10))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
                     public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {

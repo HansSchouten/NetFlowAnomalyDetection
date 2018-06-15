@@ -32,9 +32,14 @@ public class SymbolConfig {
      * @throws Exception
      */
     protected void read() throws Exception {
+        /*
         String path = "input\\config\\symbols.txt";
         File file = new File(path);
         Scanner sc = new Scanner(file);
+        */
+        // speedup
+        Scanner sc = new Scanner("#bytes\n" + "0-100 100-300 300-");
+
         while (sc.hasNextLine()) {
             // read key line
             String key = sc.nextLine();

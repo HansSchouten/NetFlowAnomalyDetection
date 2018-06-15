@@ -51,6 +51,7 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
         String cleanID = stateMachineID.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
         String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
         String path = "output\\state-machines\\machine-" + cleanID + "-" + timeStamp + ".png";
+        System.out.println(path);
         // write the graph to file
         super.writeToFile(path);
     }

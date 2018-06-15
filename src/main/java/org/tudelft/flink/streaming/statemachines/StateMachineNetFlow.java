@@ -12,15 +12,23 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Number of symbols contained in a future.
      */
-    public static int FUTURE_SIZE = 3;
+    public static int FUTURE_SIZE = 5;
     /**
      * Show a visualisation of the learned State Machine.
      */
-    public static boolean SHOW_VISUALISATION = true;
+    public static boolean SHOW_VISUALISATION = false;
+    /**
+     * Show a visualisation for each step of learning the State Machine.
+     */
+    public static boolean VISUALISE_STEPS = false;
     /**
      * Output a file containing the visualised State Machine.
      */
-    public static boolean OUTPUT_VISUALISATION_FILE = true;
+    public static boolean OUTPUT_VISUALISATION_FILE = false;
+    /**
+     * Turn on/off depending on whether we are running on NetFlow or PAutomaC sequences (with stop symbols).
+     */
+    public static boolean PAUTOMAC_TEST = false;
     /**
      * Output a file containing all encountered patterns (for debugging purposes).
      */
@@ -46,7 +54,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * The list of all red states (states that are part of the final State Machine).
      */
-    public List<State> redStates;
+    public List<State> redStates = new LinkedList<>();
     /**
      * The symbol configuration that is used to map NetFlows to symbols.
      */
@@ -87,11 +95,13 @@ public class StateMachineNetFlow extends NetFlow {
         // start with processing this object, before processing all rolling NetFlows
         if (this.flow_counter == 0) {
             log(this.stateMachineID + " reducing first NetFlow");
+            long now = System.nanoTime();
+            log(String.valueOf(now));
 
+            this.future = new LinkedList<>();
             this.root = new State(State.Color.RED, 0);
             this.root.setLabel(String.valueOf(this.current_char));
             nextChar();
-            this.future = new LinkedList<>();
 
             this.instances = new HashMap<>();
             this.instances.put(this.root.hashCode(), this.root);
@@ -103,6 +113,7 @@ public class StateMachineNetFlow extends NetFlow {
             log("=====");
             processFlow(this);
         }
+
         // process incoming NetFlow
         processFlow(nextNetFlow);
     }
@@ -135,30 +146,21 @@ public class StateMachineNetFlow extends NetFlow {
             patternFileOutput.addPattern(this.future);
         }
 
-        // all futures start in the root, so add the root to the list of states to evaluate the current future on
-        //this.instances.put(this.root.hashCode(), this.root);      // ADD THIS LINE ON NETFLOW STREAMS
-
-        // DEBUG
-        /*
-        if (this.currentSymbol != null) {
-            this.log("Current: " + this.currentSymbol.toString());
-        }
-        for (Symbol s : this.future) {
-            this.log(s.toString());
-        }
-        */
-
-        // if we encounter a reset symbol, reset all instances      // REMOVE THIS BLOCK ON NETFLOW STREAMS
-        Symbol resetSymbol = new Symbol("-1");
-        for (Symbol futureSymbol : this.future) {
-            if (futureSymbol.equals(resetSymbol) || this.currentSymbol.equals(resetSymbol)) {
-                this.skip_counter++;
-                this.instances = new HashMap<>();
-                this.instances.put(this.root.hashCode(), this.root);
-                return;
+        if (PAUTOMAC_TEST) {
+            // if we encounter a reset symbol, reset all instances      // DISABLE THIS BLOCK ON NETFLOW STREAMS
+            Symbol resetSymbol = new Symbol("-1");
+            for (Symbol futureSymbol : this.future) {
+                if (futureSymbol.equals(resetSymbol) || this.currentSymbol.equals(resetSymbol)) {
+                    this.skip_counter++;
+                    this.instances = new HashMap<>();
+                    this.instances.put(this.root.hashCode(), this.root);
+                    return;
+                }
             }
+        } else {
+            // all futures start in the root, so add the root to the list of states to evaluate the current future on
+            this.instances.put(this.root.hashCode(), this.root);      // ENABLE THIS LINE ON NETFLOW STREAMS
         }
-        //this.log("----");
 
         // evaluate this future in all state instances (increasing the occurrence frequency of this future)
         evaluateInstances();
@@ -193,21 +195,23 @@ public class StateMachineNetFlow extends NetFlow {
                     instance = mostSimilarState;
                 }
 
-                // VISUALISE STEPS
-                BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
-                visualiser.visualise(this.redStates);
-                visualiser.showVisualisation();
-                visualiser.writeToFile(this.stateMachineID);
+                if (VISUALISE_STEPS) {
+                    BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
+                    visualiser.visualise(this.redStates);
+                    visualiser.showVisualisation();
+                    visualiser.writeToFile(this.stateMachineID);
+                }
             }
 
             // get the next state in the direction of the symbol of the consumed NetFlow
             State next = instance.getState(this.currentSymbol, this.current_char);
             if (next != null && next.new_state) {
-                // VISUALISE STEPS
-                BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
-                visualiser.visualise(this.redStates);
-                visualiser.showVisualisation();
-                visualiser.writeToFile(this.stateMachineID);
+                if (VISUALISE_STEPS) {
+                    BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
+                    visualiser.visualise(this.redStates);
+                    visualiser.showVisualisation();
+                    visualiser.writeToFile(this.stateMachineID);
+                }
                 next.new_state = false;
 
                 nextChar();
@@ -244,21 +248,21 @@ public class StateMachineNetFlow extends NetFlow {
      */
     @Override
     public String toString() {
+        log(this.stateMachineID + " has " + this.flow_counter + " flows");
+        log("#skipped sequences due to stop symbol: " + Integer.toString(this.skip_counter));
+        long now = System.nanoTime();
+        log(String.valueOf(now));
+
         if (SHOW_VISUALISATION || OUTPUT_VISUALISATION_FILE) {
-            log(this.stateMachineID + " has " + this.flow_counter + " flows");
-            log("#skipped sequences due to stop symbol: " + Integer.toString(this.skip_counter));
-
-            /*
-            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
+            System.out.println("VISUALISING");
+            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
             visualiser.visualise(this.redStates);
-
             if (SHOW_VISUALISATION) {
                 visualiser.showVisualisation();
             }
             if (OUTPUT_VISUALISATION_FILE) {
                 visualiser.writeToFile(this.stateMachineID);
             }
-            */
         }
 
         if (OUTPUT_PATTERN_FILE) {

@@ -31,7 +31,7 @@ public class StateMachineVisualiser {
      * Show the State Machine visualisation.
      */
     public void showVisualisation() {
-        if (this.graph.getNodeCount() > 1) {
+        if (this.graph.getNodeCount() >= 1) {
             this.graph.display();
         }
     }

@@ -6,18 +6,17 @@ import org.apache.sling.commons.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class NetFlowReader {
 
-    protected BufferedReader reader;
+    protected Scanner reader;
 
     protected String nextLine;
 
     protected Format format;
+
+    protected String path;
 
     public enum Format {
         STRATOSPHERE,
@@ -25,19 +24,26 @@ public class NetFlowReader {
     }
 
     public NetFlowReader(String path, Format format) throws Exception {
+        this.path = path;
         this.format = format;
         File file = new File(path);
-        this.reader = new BufferedReader(new FileReader(file));
+        this.reader = new Scanner(new BufferedReader(new FileReader(file)));
+        // skip first line (with columns)
+        this.reader.nextLine();
     }
 
     public boolean hasNext() {
-        try {
-            this.nextLine = this.reader.readLine();
-        } catch (Exception ex) {
-            return false;
+        if (!this.reader.hasNextLine()) {
+            try {
+                File file = new File(this.path);
+                this.reader = new Scanner(new BufferedReader(new FileReader(file)));
+                // skip first line (with columns)
+                this.reader.nextLine();
+            } catch (Exception e) {
+                return false;
+            }
         }
-
-        return (this.nextLine != null);
+        return this.reader.hasNextLine();
     }
 
     /**
@@ -46,12 +52,14 @@ public class NetFlowReader {
      * @return
      */
     public String getNextJSONFlow() {
+        this.nextLine = this.reader.nextLine();
+
         if (this.format == Format.STRATOSPHERE) {
             return getNextStratosphere();
         } else if (this.format == Format.TSHARK) {
             return getNextTShark();
         }
-        return null;
+        return "";
     }
 
     public String getNextTShark() {
@@ -78,7 +86,7 @@ public class NetFlowReader {
 
             jsonFlow.put("DataSets", jsonFlowDataInner);
         } catch (Exception ex) {
-            return null;
+            return "";
         }
 
         return jsonFlow.toString();

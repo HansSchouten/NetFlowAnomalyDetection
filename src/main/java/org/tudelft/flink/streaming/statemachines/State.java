@@ -56,7 +56,7 @@ public class State {
     }
 
     public void setLabel(String label) {
-        this.label = label;
+        //this.label = label;
     }
 
     public String getLabel() {
@@ -230,6 +230,7 @@ public class State {
         long[] sketch1 = this.getSketchVector();
         long[] sketch2 = other.getSketchVector();
 
+        /*
         System.out.println(this.hashCode() + ":");
         for (int i = 0; i < sketch1.length; i++) {
             System.out.print(sketch1[i] + ",");
@@ -239,9 +240,10 @@ public class State {
         for (int i = 0; i < sketch2.length; i++) {
             System.out.print(sketch2[i] + ",");
         }
+        */
 
         double similarity = cosineSimilarity(sketch1, sketch2);
-        System.out.println("");
+        //System.out.println("");
         System.out.println("SIM: " + similarity);
         return similarity;
     }

@@ -22,6 +22,7 @@ public class KafkaProducer {
 
         //produceDebug(producer);
         producePatterns(producer);
+        //replayStratosphere(producer);
     }
 
     protected static void produceDebug(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
@@ -46,8 +47,18 @@ public class KafkaProducer {
             Symbol next = tester.getNext();
             String data = "{\"AgentID\":\"127.0.0.1\",\"Header\":{\"Version\":9,\"Count\":2,\"SysUpTime\":0,\"UNIXSecs\":1521118700,\"SeqNum\":1602,\"SrcID\":0},\"DataSets\":[[{\"I\":0,\"V\":\"" + next.toString() + "\"},{\"I\":8,\"V\":\"10.0.0.2\"},{\"I\":12,\"V\":\"10.0.0.3\"},{\"I\":15,\"V\":\"0.0.0.0\"},{\"I\":10,\"V\":3},{\"I\":14,\"V\":5},{\"I\":2,\"V\":\"0x000000f5\"},{\"I\":1,\"V\":\"0x000000b6\"},{\"I\":7,\"V\":4242},{\"I\":11,\"V\":80},{\"I\":6,\"V\":\"0x00\"},{\"I\":4,\"V\":17},{\"I\":5,\"V\":1},{\"I\":17,\"V\":\"0x0003\"},{\"I\":16,\"V\":\"0x0002\"},{\"I\":9,\"V\":32},{\"I\":13,\"V\":31},{\"I\":21,\"V\":40536924},{\"I\":22,\"V\":40476924}]]}";
             producer.send(new ProducerRecord<String, String>(topic, data));
+        }
+    }
 
-            //Thread.sleep(500);
+    protected static void replayStratosphere(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
+        NetFlowReader reader = new NetFlowReader("input\\cryptowall.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\WannaCry.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\internet-traffic_tshark.txt", NetFlowReader.Format.TSHARK);
+        //NetFlowReader reader = new NetFlowReader("input\\15min-skype-call_tshark.txt", NetFlowReader.Format.TSHARK);
+
+        while (reader.hasNext()) {
+            String data = reader.getNextJSONFlow();
+            producer.send(new ProducerRecord<String, String>(topic, data));
         }
     }
 
