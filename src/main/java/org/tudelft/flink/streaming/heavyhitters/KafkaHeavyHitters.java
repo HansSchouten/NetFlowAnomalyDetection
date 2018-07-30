@@ -44,16 +44,29 @@ public class KafkaHeavyHitters {
 		DataStream<HeavyHitterNetFlow> netflowStream = env.addSource(kafkaConsumer);
 
 		// write Kafka stream to standard out.
-		DataStream<HeavyHitterNetFlow> hostFlowCounts = netflowStream
+		DataStream<HeavyHitterNetFlow> hostInfections = netflowStream
 				.keyBy("srcIP")
-				.timeWindow(Time.seconds(1))
+				.timeWindow(Time.seconds(3600))
 				.reduce(new ReduceFunction<HeavyHitterNetFlow>() {
 					@Override
 					public HeavyHitterNetFlow reduce(HeavyHitterNetFlow rollingCount, HeavyHitterNetFlow newNetflow) {
-                        rollingCount.addHitter(newNetflow);
+                        rollingCount.checkInfected(newNetflow);
 						return rollingCount;
 					}
 				});
+
+		/*
+        // write Kafka stream to standard out.
+        DataStream<HeavyHitterNetFlow> hostFlowCounts = netflowStream
+                .keyBy("srcIP")
+                .timeWindow(Time.seconds(1))
+                .reduce(new ReduceFunction<HeavyHitterNetFlow>() {
+                    @Override
+                    public HeavyHitterNetFlow reduce(HeavyHitterNetFlow rollingCount, HeavyHitterNetFlow newNetflow) {
+                        rollingCount.addHitter(newNetflow);
+                        return rollingCount;
+                    }
+                });
 
         DataStream<HeavyHitterNetFlow> topN = hostFlowCounts
                 .windowAll(TumblingEventTimeWindows.of(Time.seconds(1)))
@@ -64,9 +77,10 @@ public class KafkaHeavyHitters {
                         return rollingTopN;
                     }
                 });
+        */
 
 		// output the results (with a single thread, rather than in parallel)
-        topN.print();//.setParallelism(1);
+        //topN.print();//.setParallelism(1);
 
         // trigger execution
         env.execute("Kafka NetFlow HeavyHitters");

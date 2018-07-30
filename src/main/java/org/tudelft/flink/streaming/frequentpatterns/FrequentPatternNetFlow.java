@@ -1,22 +1,39 @@
 package org.tudelft.flink.streaming.frequentpatterns;
 
 import com.clearspring.analytics.stream.frequency.CountMinSketch;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.tudelft.flink.streaming.NetFlow;
 import org.tudelft.flink.streaming.TopN;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FrequentPatternNetFlow extends NetFlow {
 
     public CountMinSketch cmSketch;
     public TopN topNPatterns;
     public final int max_size = 10;
+    public List<FrequentPatternNetFlow> dataset;
 
     public FrequentPatternNetFlow() {
         this.cmSketch = new CountMinSketch(10, 100, 1);
         this.topNPatterns = new TopN(max_size);
     }
 
+    @Override
     public void setFromString(String line) {
-        super.setFromString(line);
+        this.dataset = new ArrayList<>();
+
+        JsonNode jsonDataset = super.getFromString(line);
+        if (jsonDataset == null) {
+            return;
+        }
+
+        for (JsonNode parameters : jsonDataset) {
+            FrequentPatternNetFlow flow = new FrequentPatternNetFlow();
+            flow.setFromJsonNode(parameters);
+            this.dataset.add(flow);
+        }
     }
 
     public void addFlow(FrequentPatternNetFlow newNetflow) {

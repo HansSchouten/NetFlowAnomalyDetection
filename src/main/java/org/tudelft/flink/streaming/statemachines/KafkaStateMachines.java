@@ -1,6 +1,7 @@
 package org.tudelft.flink.streaming.statemachines;
 
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
@@ -11,6 +12,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
+import org.apache.flink.util.Collector;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
 import java.util.LinkedList;
@@ -83,7 +85,7 @@ public class KafkaStateMachines {
         //env.enableCheckpointing(500, CheckpointingMode.EXACTLY_ONCE);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
+        env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
 
         // create Kafka consumer
         FlinkKafkaConsumer010<StateMachineNetFlow> kafkaConsumer = new FlinkKafkaConsumer010<>(
@@ -96,8 +98,16 @@ public class KafkaStateMachines {
 
         // write Kafka stream to standard out.
         DataStream<StateMachineNetFlow> hostSequences = netFlowStream
+                .flatMap(new FlatMapFunction<StateMachineNetFlow, StateMachineNetFlow>() {
+                    @Override
+                    public void flatMap(StateMachineNetFlow in, Collector<StateMachineNetFlow> out) {
+                        for (StateMachineNetFlow flow : in.dataset) {
+                            out.collect(flow);
+                        }
+                    }
+                })
                 .keyBy("IPPair")
-                .timeWindow(Time.seconds(10))
+                .timeWindow(Time.seconds(300))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
                     public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {

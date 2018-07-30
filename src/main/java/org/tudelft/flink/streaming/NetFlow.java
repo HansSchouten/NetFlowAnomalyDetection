@@ -23,9 +23,12 @@ public class NetFlow implements Serializable {
 
     /**
      * Set all instance variables to the values encoded in the given JSON string.
-     * @param data
+     * @param line
      */
-    public void setFromString(String data) {
+    public void setFromString(String line) {
+    }
+
+    public JsonNode getFromString(String data) {
         JsonNode jsonNode = null;
 
         // parse JSON
@@ -35,22 +38,26 @@ public class NetFlow implements Serializable {
         // take NetFLow variables from JSON object
         if (jsonNode != null) {
             this.json = jsonNode.toString();
-            JsonNode parameters = jsonNode.get("DataSets").get(0);
-
-            // Store all IPFIX Information Elements in this NetFlow object
-            for (JsonNode parameter : parameters) {
-                Integer id = Integer.parseInt(parameter.get("I").asText());
-                String value = parameter.get("V").asText();
-                storeElement(id, value);
-            }
-
-            // store ip pair (with lowest ip first)
-            if (this.srcIP.hashCode() < this.dstIP.hashCode()) {
-                this.IPPair = this.srcIP + "," + this.dstIP;
-            } else {
-                this.IPPair = this.dstIP + "," + this.srcIP;
-            }
+            return jsonNode.get("DataSets");
         }
+        return null;
+    }
+
+    public void setFromJsonNode(JsonNode parameters) {
+        // Store all IPFIX Information Elements in this NetFlow object
+        for (JsonNode parameter : parameters) {
+            Integer id = Integer.parseInt(parameter.get("I").asText());
+            String value = parameter.get("V").asText();
+            storeElement(id, value);
+        }
+
+        // store ip pair (with lowest ip first)
+        if (this.srcIP.hashCode() < this.dstIP.hashCode()) {
+            this.IPPair = this.srcIP + "," + this.dstIP;
+        } else {
+            this.IPPair = this.dstIP + "," + this.srcIP;
+        }
+        //this.IPPair = "test";   // DEBUG: combine all flows
     }
 
     /**

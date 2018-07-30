@@ -47,7 +47,7 @@ public class StateMachineVisualiser {
             return;
         }
         // create image file sink
-        FileSinkImages sink = new FileSinkImages(FileSinkImages.OutputType.PNG, FileSinkImages.Resolutions.PAL);
+        FileSinkImages sink = new FileSinkImages(FileSinkImages.OutputType.PNG, FileSinkImages.Resolutions.HD720);
         sink.setLayoutPolicy(FileSinkImages.LayoutPolicy.COMPUTED_FULLY_AT_NEW_IMAGE);
         sink.setRenderer(FileSinkImages.RendererType.SCALA);
         // write graph to sink

@@ -18,9 +18,12 @@ public class NetFlowReader {
 
     protected String path;
 
+    protected boolean reset_on_end = false;
+
     public enum Format {
         STRATOSPHERE,
-        TSHARK
+        TSHARK,
+        NFDUMP
     }
 
     public NetFlowReader(String path, Format format) throws Exception {
@@ -33,13 +36,18 @@ public class NetFlowReader {
     }
 
     public boolean hasNext() {
-        if (!this.reader.hasNextLine()) {
+        if (! this.reader.hasNextLine()) {
+            if (! this.reset_on_end) {
+                return false;
+            }
+
             try {
                 File file = new File(this.path);
                 this.reader = new Scanner(new BufferedReader(new FileReader(file)));
                 // skip first line (with columns)
                 this.reader.nextLine();
             } catch (Exception e) {
+                System.out.println(e.getMessage());
                 return false;
             }
         }
@@ -58,8 +66,19 @@ public class NetFlowReader {
             return getNextStratosphere();
         } else if (this.format == Format.TSHARK) {
             return getNextTShark();
+        } else if (this.format == Format.NFDUMP) {
+            return getNextNFDump();
         }
         return "";
+    }
+
+    /**
+     * Reset to the start of the file if the end has been reached.
+     *
+     * @param reset
+     */
+    public void resetOnEnd(boolean reset) {
+        this.reset_on_end = reset;
     }
 
     public String getNextTShark() {
@@ -114,7 +133,39 @@ public class NetFlowReader {
 
             jsonFlow.put("DataSets", jsonFlowDataInner);
         } catch (Exception ex) {
-            return null;
+            System.out.println(ex.getMessage());
+            return "";
+        }
+
+        return jsonFlow.toString();
+    }
+
+    public String getNextNFDump() {
+        JSONObject jsonFlow = new JSONObject();
+
+        String[] args = this.nextLine.split(",");
+
+        try {
+            if (args[3].equals("177.32.252.28") || args[4].equals("177.32.252.28")) {
+                return null;
+            }
+            JSONArray jsonFlowData = new JSONArray();
+            jsonFlowData.put(getArg(1, "0x" + Long.toHexString(Long.valueOf(args[12]) + Long.valueOf(args[14]) )));
+            jsonFlowData.put(getArg(2, "0x" + Long.toHexString(Long.valueOf(args[11]) + Long.valueOf(args[13]) )));
+            jsonFlowData.put(getArg(7, args[5]));
+            jsonFlowData.put(getArg(8, args[3]));
+            jsonFlowData.put(getArg(11, args[6]));
+            jsonFlowData.put(getArg(12, args[4]));
+            jsonFlowData.put(getArg(21, "0"));
+            jsonFlowData.put(getArg(22, "0"));
+
+            JSONArray jsonFlowDataInner = new JSONArray();
+            jsonFlowDataInner.put(jsonFlowData);
+
+            jsonFlow.put("DataSets", jsonFlowDataInner);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            return "";
         }
 
         return jsonFlow.toString();

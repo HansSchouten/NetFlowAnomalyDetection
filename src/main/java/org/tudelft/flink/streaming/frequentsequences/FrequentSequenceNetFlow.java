@@ -1,9 +1,12 @@
 package org.tudelft.flink.streaming.frequentsequences;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import javafx.util.Pair;
 import org.tudelft.flink.streaming.NetFlow;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class FrequentSequenceNetFlow extends NetFlow {
 
@@ -23,13 +26,27 @@ public class FrequentSequenceNetFlow extends NetFlow {
      */
     public HashMap<Pair, Long> transitionCounts;
 
+    public List<FrequentSequenceNetFlow> dataset;
+
 
     public FrequentSequenceNetFlow() {
         this.transitionCounts = new HashMap<>();
     }
 
+    @Override
     public void setFromString(String line) {
-        super.setFromString(line);
+        this.dataset = new ArrayList<>();
+
+        JsonNode jsonDataset = super.getFromString(line);
+        if (jsonDataset == null) {
+            return;
+        }
+
+        for (JsonNode parameters : jsonDataset) {
+            FrequentSequenceNetFlow flow = new FrequentSequenceNetFlow();
+            flow.setFromJsonNode(parameters);
+            this.dataset.add(flow);
+        }
     }
 
 

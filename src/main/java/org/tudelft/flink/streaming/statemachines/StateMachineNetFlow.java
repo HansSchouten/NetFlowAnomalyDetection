@@ -1,5 +1,6 @@
 package org.tudelft.flink.streaming.statemachines;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.tudelft.flink.streaming.NetFlow;
 import org.tudelft.flink.streaming.statemachines.helpers.PatternFileOutput;
 import org.tudelft.flink.streaming.statemachines.visualisation.BlueFringeVisualiser;
@@ -24,7 +25,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Output a file containing the visualised State Machine.
      */
-    public static boolean OUTPUT_VISUALISATION_FILE = false;
+    public static boolean OUTPUT_VISUALISATION_FILE = true;
     /**
      * Turn on/off depending on whether we are running on NetFlow or PAutomaC sequences (with stop symbols).
      */
@@ -74,6 +75,8 @@ public class StateMachineNetFlow extends NetFlow {
 
     public char current_char = 'A';
 
+    public List<StateMachineNetFlow> dataset;
+
     /**
      * StateMachineNetFlow constructor.
      */
@@ -87,7 +90,24 @@ public class StateMachineNetFlow extends NetFlow {
      */
     @Override
     public void setFromString(String line) {
-        super.setFromString(line);
+        this.dataset = new ArrayList<>();
+
+        JsonNode jsonDataset = super.getFromString(line);
+        if (jsonDataset == null) {
+            return;
+        }
+
+        for (JsonNode parameters : jsonDataset) {
+            StateMachineNetFlow flow = new StateMachineNetFlow();
+            flow.setFromJsonNode(parameters);
+            flow.setSingleFlow();
+            // symbolconfig is for testing purposes
+            flow.symbolConfig = new SymbolConfig();
+            this.dataset.add(flow);
+        }
+    }
+
+    public void setSingleFlow() {
         this.stateMachineID = this.srcIP + "-" + this.dstIP;
     }
 
@@ -255,7 +275,7 @@ public class StateMachineNetFlow extends NetFlow {
 
         if (SHOW_VISUALISATION || OUTPUT_VISUALISATION_FILE) {
             System.out.println("VISUALISING");
-            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
+            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
             visualiser.visualise(this.redStates);
             if (SHOW_VISUALISATION) {
                 visualiser.showVisualisation();

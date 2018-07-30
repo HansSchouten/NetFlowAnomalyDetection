@@ -32,7 +32,7 @@ public class PatternTester {
     }
 
     protected ArrayList<Integer> readPattern() throws FileNotFoundException {
-        String path = "input\\pautomac\\set-I\\0-1pautomac.train";
+        String path = "input\\pautomac\\20states\\2-1pautomac.train";
         File file = new File(path);
         Scanner sc = new Scanner(file);
         // skip first line

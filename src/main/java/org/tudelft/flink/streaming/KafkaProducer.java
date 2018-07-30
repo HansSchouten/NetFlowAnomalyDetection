@@ -21,8 +21,8 @@ public class KafkaProducer {
         org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(properties);
 
         //produceDebug(producer);
-        producePatterns(producer);
-        //replayStratosphere(producer);
+        //producePatterns(producer);
+        replayStratosphere(producer);
     }
 
     protected static void produceDebug(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
@@ -41,7 +41,7 @@ public class KafkaProducer {
     protected static void producePatterns(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
         PatternTester tester = new PatternTester();
         int counter = 0;
-        while (counter < 10000000) {
+        while (counter < 1000000) {
             counter++;
 
             Symbol next = tester.getNext();
@@ -51,14 +51,26 @@ public class KafkaProducer {
     }
 
     protected static void replayStratosphere(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
-        NetFlowReader reader = new NetFlowReader("input\\cryptowall.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\cryptowall.uninetflow", NetFlowReader.Format.STRATOSPHERE);
         //NetFlowReader reader = new NetFlowReader("input\\WannaCry.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\artemis_311.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        NetFlowReader reader = new NetFlowReader("input\\0200.txt", NetFlowReader.Format.NFDUMP);
         //NetFlowReader reader = new NetFlowReader("input\\internet-traffic_tshark.txt", NetFlowReader.Format.TSHARK);
         //NetFlowReader reader = new NetFlowReader("input\\15min-skype-call_tshark.txt", NetFlowReader.Format.TSHARK);
 
-        while (reader.hasNext()) {
-            String data = reader.getNextJSONFlow();
-            producer.send(new ProducerRecord<String, String>(topic, data));
+        reader.resetOnEnd(true);
+
+        int counter = 0;
+        while (counter < 1800000) {
+
+            if (reader.hasNext()) {
+                String data = reader.getNextJSONFlow();
+                if (data != null) {
+                    producer.send(new ProducerRecord<String, String>(topic, data));
+                }
+            }
+
+            counter++;
         }
     }
 
