@@ -1,5 +1,6 @@
 package org.tudelft.flink.streaming.heavyhitters;
 
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
@@ -10,6 +11,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
+import org.apache.flink.util.Collector;
 
 public class KafkaHeavyHitters {
 
@@ -43,23 +45,18 @@ public class KafkaHeavyHitters {
 		// create stream
 		DataStream<HeavyHitterNetFlow> netflowStream = env.addSource(kafkaConsumer);
 
-		// write Kafka stream to standard out.
-		DataStream<HeavyHitterNetFlow> hostInfections = netflowStream
-				.keyBy("srcIP")
-				.timeWindow(Time.seconds(3600))
-				.reduce(new ReduceFunction<HeavyHitterNetFlow>() {
-					@Override
-					public HeavyHitterNetFlow reduce(HeavyHitterNetFlow rollingCount, HeavyHitterNetFlow newNetflow) {
-                        rollingCount.checkInfected(newNetflow);
-						return rollingCount;
-					}
-				});
-
-		/*
         // write Kafka stream to standard out.
         DataStream<HeavyHitterNetFlow> hostFlowCounts = netflowStream
+                .flatMap(new FlatMapFunction<HeavyHitterNetFlow, HeavyHitterNetFlow>() {
+                    @Override
+                    public void flatMap(HeavyHitterNetFlow in, Collector<HeavyHitterNetFlow> out) {
+                        for (HeavyHitterNetFlow flow : in.dataset) {
+                            out.collect(flow);
+                        }
+                    }
+                })
                 .keyBy("srcIP")
-                .timeWindow(Time.seconds(1))
+                .timeWindow(Time.seconds(10))
                 .reduce(new ReduceFunction<HeavyHitterNetFlow>() {
                     @Override
                     public HeavyHitterNetFlow reduce(HeavyHitterNetFlow rollingCount, HeavyHitterNetFlow newNetflow) {
@@ -69,7 +66,7 @@ public class KafkaHeavyHitters {
                 });
 
         DataStream<HeavyHitterNetFlow> topN = hostFlowCounts
-                .windowAll(TumblingEventTimeWindows.of(Time.seconds(1)))
+                .windowAll(TumblingEventTimeWindows.of(Time.seconds(10)))
                 .reduce(new ReduceFunction<HeavyHitterNetFlow>() {
                     @Override
                     public HeavyHitterNetFlow reduce(HeavyHitterNetFlow rollingTopN, HeavyHitterNetFlow newHostCount) {
@@ -77,10 +74,9 @@ public class KafkaHeavyHitters {
                         return rollingTopN;
                     }
                 });
-        */
 
 		// output the results (with a single thread, rather than in parallel)
-        //topN.print();//.setParallelism(1);
+        topN.print();//.setParallelism(1);
 
         // trigger execution
         env.execute("Kafka NetFlow HeavyHitters");

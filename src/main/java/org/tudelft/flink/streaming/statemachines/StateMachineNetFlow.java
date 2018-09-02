@@ -2,10 +2,13 @@ package org.tudelft.flink.streaming.statemachines;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.tudelft.flink.streaming.NetFlow;
-import org.tudelft.flink.streaming.statemachines.helpers.PatternFileOutput;
 import org.tudelft.flink.streaming.statemachines.visualisation.BlueFringeVisualiser;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class StateMachineNetFlow extends NetFlow {
@@ -13,7 +16,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Number of symbols contained in a future.
      */
-    public static int FUTURE_SIZE = 5;
+    public static int FUTURE_SIZE = 4;
     /**
      * Show a visualisation of the learned State Machine.
      */
@@ -34,7 +37,7 @@ public class StateMachineNetFlow extends NetFlow {
      * Output a file containing all encountered patterns (for debugging purposes).
      */
     public static boolean OUTPUT_PATTERN_FILE = false;
-    public PatternFileOutput patternFileOutput = new PatternFileOutput(FUTURE_SIZE);
+    //public PatternFileOutput patternFileOutput = new PatternFileOutput(FUTURE_SIZE);
 
     /**
      * The root node of the State Machine.
@@ -74,8 +77,18 @@ public class StateMachineNetFlow extends NetFlow {
     public int skip_counter = 0;
 
     public char current_char = 'A';
-
+    /**
+     * The NetFlows inside this NetFlow.
+     */
     public List<StateMachineNetFlow> dataset;
+    /**
+     * The number of red states at which the last visualisation is made.
+     */
+    public int redStateVisualiseCount = 1;
+    /**
+     * Object for matching this State Machine with known fingerprints.
+     */
+    public FingerprintMatcher fingerprintMatcher;
 
     /**
      * StateMachineNetFlow constructor.
@@ -103,18 +116,68 @@ public class StateMachineNetFlow extends NetFlow {
             flow.setSingleFlow();
             // symbolconfig is for testing purposes
             flow.symbolConfig = new SymbolConfig();
+
+            /*
+            // Eduroam skip massive StateMachine
+            if (flow.srcIP.equals("177.32.252.28") && flow.dstIP.equals("176.71.103.118")) {
+                continue;
+            }
+            if (flow.srcIP.equals("176.71.103.118") && flow.dstIP.equals("177.32.252.28")) {
+                continue;
+            }
+            */
+
             this.dataset.add(flow);
         }
     }
 
     public void setSingleFlow() {
-        this.stateMachineID = this.srcIP + "-" + this.dstIP;
+        this.stateMachineID = this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();
     }
 
+    public void appendFile(String line) {
+        try
+        {
+            String filename= "smb.log";
+            FileWriter fw = new FileWriter(filename,true);
+            fw.write(line + "\n");
+            fw.close();
+        }
+        catch(IOException ioe)
+        {
+            System.err.println("IOException: " + ioe.getMessage());
+        }
+    }
+
+    public long count = 0;
     public void consumeNetFlow(StateMachineNetFlow nextNetFlow) {
+        if (nextNetFlow.dstPort.equals("445")) {
+            String newLine = nextNetFlow.toString();
+            appendFile(newLine);
+        }
+
+        if (this.count % 1000000 == 0 || this.count == 0) {
+            System.out.println("Number of flows processed: " + this.count);
+        }
+        this.count++;
+
+        if (true) {
+            return;
+        }
+
+
+
+
+
+
+
+        if (this.redStates.size() > 14) {
+            resetStateMachine();
+        }
+
         // start with processing this object, before processing all rolling NetFlows
         if (this.flow_counter == 0) {
-            log(this.stateMachineID + " reducing first NetFlow");
+            //System.out.println(this.stateMachineID + " reducing first NetFlow");
             long now = System.nanoTime();
             log(String.valueOf(now));
 
@@ -132,10 +195,24 @@ public class StateMachineNetFlow extends NetFlow {
             log(Integer.toString(this.root.hashCode()));
             log("=====");
             processFlow(this);
+            //addForPercentile(this);
+        }
+
+        if (this.redStates.size() > redStateVisualiseCount && this.redStates.size() > 6) {
+            this.toString();
+            this.redStateVisualiseCount++;
         }
 
         // process incoming NetFlow
         processFlow(nextNetFlow);
+        //addForPercentile(nextNetFlow);
+    }
+
+    public void resetStateMachine() {
+        this.current_char = 'A';
+        this.flow_counter = 0;
+        this.skip_counter = 0;
+        this.redStateVisualiseCount = 1;
     }
 
     /**
@@ -152,18 +229,16 @@ public class StateMachineNetFlow extends NetFlow {
 
         // update the future
         if (this.future.size() == FUTURE_SIZE) {
-            this.currentSymbol = this.future.poll();
-        }
-        this.future.add(incomingSymbol);
-
-        // only start processing the future if it has a sufficient size
-        if (this.currentSymbol == null) {
+            this.currentSymbol = this.future.peek();
+        } else {
+            this.future.add(incomingSymbol);
+            // only start processing the future if it has a sufficient size
             return;
         }
 
         // add future to the collection of all encountered patterns (only used for debugging)
         if (OUTPUT_PATTERN_FILE) {
-            patternFileOutput.addPattern(this.future);
+            //patternFileOutput.addPattern(this.future);
         }
 
         if (PAUTOMAC_TEST) {
@@ -184,6 +259,10 @@ public class StateMachineNetFlow extends NetFlow {
 
         // evaluate this future in all state instances (increasing the occurrence frequency of this future)
         evaluateInstances();
+
+        // update future for next iteration
+        this.future.poll();
+        this.future.add(incomingSymbol);
     }
 
     /**
@@ -201,7 +280,7 @@ public class StateMachineNetFlow extends NetFlow {
 
             // merge or color the state if a significant amount of futures are captured in this state
             if (instance.getColor() == State.Color.BLUE && instance.isSignificant()) {
-                System.out.println("Significant State: " + instance.hashCode());
+                log("Significant State: " + instance.hashCode());
 
                 State mostSimilarState = instance.getMostSimilarState(this.redStates);
                 if (mostSimilarState == null) {
@@ -268,13 +347,34 @@ public class StateMachineNetFlow extends NetFlow {
      */
     @Override
     public String toString() {
+        if (true) {
+            return this.srcIP
+                + "," + this.srcPort
+                + "," + this.protocol
+                + "," + this.dstIP
+                + "," + this.dstPort
+                + "," + this.byteCount
+                + "," + this.packetCount
+                + "," + (int) this.averagePacketSize;
+        }
+
+        // match with malware fingerprints
+        this.matchMalware(this.stateMachineID);
+
+        if (true) {
+            return "";
+        }
+
         log(this.stateMachineID + " has " + this.flow_counter + " flows");
         log("#skipped sequences due to stop symbol: " + Integer.toString(this.skip_counter));
         long now = System.nanoTime();
         log(String.valueOf(now));
 
+        // output random traces
+        this.outputRandomTraces();
+
         if (SHOW_VISUALISATION || OUTPUT_VISUALISATION_FILE) {
-            System.out.println("VISUALISING");
+            log("VISUALISING");
             BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
             visualiser.visualise(this.redStates);
             if (SHOW_VISUALISATION) {
@@ -286,14 +386,12 @@ public class StateMachineNetFlow extends NetFlow {
         }
 
         if (OUTPUT_PATTERN_FILE) {
-            this.patternFileOutput.writeToFile(this.stateMachineID);
+            //this.patternFileOutput.writeToFile(this.stateMachineID);
         }
 
-        return "";
-    }
+        //printPercentiles();
 
-    public void log(String message) {
-        System.out.println(message);
+        return "";
     }
 
     /**
@@ -305,6 +403,127 @@ public class StateMachineNetFlow extends NetFlow {
         int value = this.current_char;
         this.current_char = Character.valueOf((char) (value + 1));
         return this.current_char;
+    }
+
+    /**
+     * Match this State Machine with malware fingerprints.
+     *
+     * @param stateMachineID
+     */
+    public void matchMalware(String stateMachineID) {
+        if (this.redStates.size() <= 2) {
+            return;
+        }
+
+        if (this.fingerprintMatcher == null) {
+            this.fingerprintMatcher = new FingerprintMatcher();
+            this.fingerprintMatcher.loadFingerprints();
+        }
+
+        this.fingerprintMatcher.match(this.root, stateMachineID);
+    }
+
+    /**
+     * Generate random traces and write them to file.
+     */
+    public void outputRandomTraces() {
+        HashMap<String, Double> traces = new HashMap<>();
+
+        for (int i = 0; i < 10000; i++) {
+            State state = this.root;
+
+            Symbol transition = state.getRandomTransition();
+            double chance = state.getTransitionProbability(transition);
+            String sequence = transition.toString();
+
+            for (int s = 1; s < 3; s++) {
+                state = state.getState(transition, null);
+                if (state == null) {
+                    sequence = null;
+                    break;
+                }
+                transition = state.getRandomTransition();
+                if (transition == null) {
+                    sequence = null;
+                    break;
+                }
+                chance *= state.getTransitionProbability(transition);
+                sequence += " " + transition.toString();
+            }
+
+            if (sequence != null) {
+                traces.put(sequence, chance);
+            }
+        }
+
+        for (String trace : traces.keySet()) {
+            System.out.println(trace + " : " + traces.get(trace));
+        }
+
+        String cleanID = this.stateMachineID.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+        String path = "output\\state-machines\\traces-" + cleanID + "-" + timeStamp + ".txt";
+        System.out.println(path);
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(path));
+            // write each trace
+            for (String trace : traces.keySet()) {
+                writer.write(3 + " " + trace + " " + traces.get(trace) + "\n");
+            }
+            writer.close();
+        }
+        catch(IOException ex) {
+            System.out.println("Error writing State Machine trace file:\n" + ex.getMessage());
+        }
+    }
+
+    /**
+     * Write log messages to console.
+     *
+     * @param message
+     */
+    public void log(String message) {
+        //System.out.println(message);
+    }
+
+    public List<Double> packetSizes;
+    public List<Long> packetCounts;
+    public void addForPercentile(StateMachineNetFlow other) {
+        if (! other.protocol.equals(Protocol.TCP)) {
+            return;
+        }
+
+        if (this.packetCounts == null) {
+            this.packetCounts = new ArrayList<>();
+            this.packetSizes = new ArrayList<>();
+        }
+
+        this.packetSizes.add(other.averagePacketSize);
+        this.packetCounts.add(other.packetCount);
+    }
+
+    public void printPercentiles() {
+        System.out.println();
+
+        Collections.sort(this.packetSizes);
+        int index = (int) Math.floor(this.packetSizes.size() / 3);
+        System.out.println("Packet Sizes");
+        System.out.println(this.packetSizes.get(0));
+        System.out.println("33th percentile: " + this.packetSizes.get(index));
+        index = (int) Math.floor(this.packetSizes.size() / 3 * 2);
+        System.out.println("66th percentile: " + this.packetSizes.get(index));
+        System.out.println(this.packetSizes.get(this.packetSizes.size()-1));
+        System.out.println();
+
+        Collections.sort(this.packetCounts);
+        index = (int) Math.floor(this.packetCounts.size() / 3);
+        System.out.println("Number of packets per flow");
+        System.out.println(this.packetCounts.get(0));
+        System.out.println("33th percentile: " + this.packetCounts.get(index));
+        index = (int) Math.floor(this.packetCounts.size() / 3 * 2);
+        System.out.println("66th percentile: " + this.packetCounts.get(index));
+        System.out.println(this.packetCounts.get(this.packetCounts.size()-1));
+        System.out.println();
     }
 
 }

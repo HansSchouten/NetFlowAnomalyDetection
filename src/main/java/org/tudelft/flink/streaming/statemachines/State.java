@@ -1,6 +1,7 @@
 package org.tudelft.flink.streaming.statemachines;
 
 import com.clearspring.analytics.stream.frequency.CountMinSketch;
+import org.tudelft.flink.streaming.RandomWeightedCollection;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -10,12 +11,15 @@ public class State {
     /**
      * the number of futures processed by a state at which the state is merged or becomes a red state.
      */
-    public final int SIGNIFICANCE_BOUNDARY = 200;
+    public final int SIGNIFICANCE_BOUNDARY = 100;
     /**
      * the upper bound of the Chi-distance below which the sketches are regarded as similar.
      */
     protected double CHI_SIMILARITY = 0.5;
-    protected double COSINE_SIMILARITY = 0.95;
+    /**
+     * the lower bound of the cosine similarity, above which the sketches are regarded as similar.
+     */
+    protected double COSINE_SIMILARITY = 0.90;
     protected int DEPTH = 10;
     protected int WIDTH = 100;
     public boolean new_state = false;
@@ -26,12 +30,14 @@ public class State {
     }
 
     protected Map<Symbol, State> transitions;
+    protected Map<Symbol, Integer> transitionCounts;
     protected Map<Symbol, State> inLinks;
     protected CountMinSketch sketch;
     protected Color color;
     protected int count;
     protected int depth;
     protected String label;
+    protected RandomWeightedCollection randomTransitions;
 
     /**
      * State constructor.
@@ -40,6 +46,7 @@ public class State {
      */
     public State(Color color, int depth) {
         this.transitions = new HashMap<>();
+        this.transitionCounts = new HashMap<>();
         this.inLinks = new HashMap<>();
         this.sketch = new CountMinSketch(DEPTH, WIDTH, 1);
         this.color = color;
@@ -76,7 +83,17 @@ public class State {
             // increase the occurrence frequency of the future by one
             this.sketch.add(signature, 1);
         }
+
+        // increase number of sequences through this state
         this.count++;
+
+        // increase transition count of the symbol that is the head of the queue
+        Symbol transitionSymbol = future.peek();
+        int count = 1;
+        if (this.transitionCounts.containsKey(transitionSymbol)) {
+            count = this.transitionCounts.get(transitionSymbol) + 1;
+        }
+        this.transitionCounts.put(transitionSymbol, count);
     }
 
     /**
@@ -123,6 +140,16 @@ public class State {
     }
 
     /**
+     * Return whether this state has a transition with the given symbol.
+     *
+     * @param transition
+     * @return
+     */
+    public boolean hasTransition(Symbol transition) {
+        return this.transitions.containsKey(transition);
+    }
+
+    /**
      * Return the state in the direction of the given transition symbol.
      *
      * @param transition
@@ -134,7 +161,7 @@ public class State {
             return this.transitions.get(transition);
         } else {
             // if no transition exists yet, but the state is part of the final State Machine, create a new blue state
-            if (this.color == Color.RED && this.depth < Math.max(StateMachineNetFlow.FUTURE_SIZE, 20)) {
+            if (this.color == Color.RED && this.depth < Math.max(StateMachineNetFlow.FUTURE_SIZE, 8)) {
                 State newState = new State(Color.BLUE, this.depth + 1);
                 if (current_char != null) {
                     newState.setLabel(String.valueOf(current_char));
@@ -244,7 +271,7 @@ public class State {
 
         double similarity = cosineSimilarity(sketch1, sketch2);
         //System.out.println("");
-        System.out.println("SIM: " + similarity);
+        //System.out.println("SIM: " + similarity);
         return similarity;
     }
 
@@ -296,6 +323,13 @@ public class State {
         return r / sketch1.length;
     }
 
+    /**
+     * Return the cosine similarity between the given vectors.
+     *
+     * @param v1
+     * @param v2
+     * @return
+     */
     protected double cosineSimilarity(long[] v1, long[] v2) {
         double dotProduct = 0.0;
         double normA = 0.0;
@@ -308,6 +342,12 @@ public class State {
         return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 
+    /**
+     * Normalize the given vector.
+     *
+     * @param vector
+     * @return
+     */
     protected double[] normalize(long[] vector) {
         double max = 0;
         for (int i = 0; i < vector.length; i++) {
@@ -320,6 +360,46 @@ public class State {
             norm[i] = vector[i] / max;
         }
         return norm;
+    }
+
+    /**
+     * Return a random transition symbol (all possible symbols have equal chance).
+     *
+     * @return
+     */
+    public Symbol getRandomTransition() {
+        // re-initialize, since transitions could have been added
+        this.randomTransitions = new RandomWeightedCollection();
+        int count = 0;
+        for (Symbol symbol : this.transitionCounts.keySet()) {
+            State next = getState(symbol, null);
+            if (next.getColor().equals(Color.BLUE)) {
+                continue;
+            }
+            count++;
+            double chance = 1.0 / (double) this.transitionCounts.keySet().size();
+            this.randomTransitions.add(chance, symbol);
+        }
+
+        // return a random Symbol
+        if (count > 0) {
+            return (Symbol) this.randomTransitions.randomEntry();
+        }
+        return null;
+    }
+
+    /**
+     * Return the occurrence probability of the given symbol.
+     *
+     * @param symbol
+     * @return
+     */
+    public Double getTransitionProbability(Symbol symbol) {
+        if (this.transitionCounts.containsKey(symbol)) {
+            return this.transitionCounts.get(symbol) / (double) this.count;
+        } else {
+            return null;
+        }
     }
 
 }

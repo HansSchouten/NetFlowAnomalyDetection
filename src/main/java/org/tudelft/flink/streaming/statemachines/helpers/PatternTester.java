@@ -20,10 +20,10 @@ public class PatternTester {
      */
     public PatternTester() {
         List<Integer> pattern = Arrays.asList(
-            0,1
+            0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1
         );
         try {
-            pattern = readPattern();
+            //pattern = readPattern();
         } catch (Exception ex) {
             System.out.println("Reading pattern error: " + ex.getMessage());
         }

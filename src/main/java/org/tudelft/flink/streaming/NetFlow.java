@@ -12,14 +12,28 @@ public class NetFlow implements Serializable {
 
     public long byteCount;
     public long packetCount;
+    public double averagePacketSize;
+    public double duration;
+    public double interarrivalTime;
+    public Protocol protocol = Protocol.UNKNOWN;
     public String srcIP;
     public String dstIP;
     public String srcPort;
     public String dstPort;
     public String IPPair;
+    public String IPPairProtocol;
     public String symbol;
     public long start;
     public long end;
+
+    public enum Protocol {
+        UDP,
+        TCP,
+        ARP,
+        ICMP,
+        OTHER,
+        UNKNOWN
+    }
 
     /**
      * Set all instance variables to the values encoded in the given JSON string.
@@ -57,7 +71,18 @@ public class NetFlow implements Serializable {
         } else {
             this.IPPair = this.dstIP + "," + this.srcIP;
         }
-        //this.IPPair = "test";   // DEBUG: combine all flows
+        this.IPPairProtocol = this.IPPair + "," + this.protocol.toString();
+        // collect all flows in one stream for debugging
+        this.IPPairProtocol = "DEBUG";
+
+        // compute average packet size
+        this.averagePacketSize = 0;
+        if (this.packetCount > 0) {
+            this.averagePacketSize = this.byteCount / (double) this.packetCount;
+        }
+
+        this.duration = 0;
+        this.interarrivalTime = 0;
     }
 
     /**
@@ -77,6 +102,19 @@ public class NetFlow implements Serializable {
                 break;
             case 2:
                 this.packetCount = Long.decode(value);
+                break;
+            case 4:
+                if (value.equals("17")) {
+                    this.protocol = Protocol.UDP;
+                } else if (value.equals("6")) {
+                    this.protocol = Protocol.TCP;
+                } else if (value.equals("1")) {
+                    this.protocol = Protocol.ICMP;
+                } else if (value.equals("54") || value.equals("91")) {
+                    this.protocol = Protocol.ARP;
+                } else {
+                    this.protocol = Protocol.OTHER;
+                }
                 break;
             case 7:
                 this.srcPort = value;
@@ -127,6 +165,8 @@ public class NetFlow implements Serializable {
                 + ", dstPort:"  + this.dstPort
                 + ", byteCount:"  + this.byteCount
                 + ", packetCount:"  + this.packetCount
+                + ", start:"  + this.start
+                + ", end:"  + this.end
                 + "]>";
     }
 

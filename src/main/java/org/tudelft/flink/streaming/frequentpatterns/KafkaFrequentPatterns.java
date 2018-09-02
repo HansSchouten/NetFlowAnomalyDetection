@@ -1,5 +1,6 @@
 package org.tudelft.flink.streaming.frequentpatterns;
 
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
@@ -10,6 +11,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
+import org.apache.flink.util.Collector;
 
 public class KafkaFrequentPatterns {
 
@@ -45,6 +47,14 @@ public class KafkaFrequentPatterns {
 
 		// write Kafka stream to standard out.
 		DataStream<FrequentPatternNetFlow> hostPatterns = netflowStream
+				.flatMap(new FlatMapFunction<FrequentPatternNetFlow, FrequentPatternNetFlow>() {
+					@Override
+					public void flatMap(FrequentPatternNetFlow in, Collector<FrequentPatternNetFlow> out) {
+						for (FrequentPatternNetFlow flow : in.dataset) {
+							out.collect(flow);
+						}
+					}
+				})
 				.keyBy("srcIP")
 				.timeWindow(Time.seconds(5))
 				.reduce(new ReduceFunction<FrequentPatternNetFlow>() {

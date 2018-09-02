@@ -36,30 +36,6 @@ public class HeavyHitterNetFlow extends NetFlow implements Comparable<HeavyHitte
         }
     }
 
-    public void checkInfected(HeavyHitterNetFlow newNetflow) {
-        List<String> cnc = new ArrayList<>();
-        cnc.add("82.165.142.107");
-        cnc.add("103.4.18.170");
-        cnc.add("81.88.24.211");
-        cnc.add("163.172.81.35");
-        cnc.add("85.25.119.91");
-        cnc.add("8.8.8.8");
-
-        String host = null;
-        for (String check : cnc) {
-            if (newNetflow.dstIP.equals(check)) {
-                host = check;
-                break;
-            }
-        }
-
-        if (host != null) {
-            System.out.println(newNetflow.srcIP + " is infected! It communicates with C&C host: " + host);
-        }
-
-        this.count++;
-    }
-
     public void addHitter(HeavyHitterNetFlow newNetflow) {
         this.count++;
     }

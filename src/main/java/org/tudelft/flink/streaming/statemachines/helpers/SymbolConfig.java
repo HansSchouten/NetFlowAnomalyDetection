@@ -38,7 +38,8 @@ public class SymbolConfig {
         Scanner sc = new Scanner(file);
         */
         // speedup
-        Scanner sc = new Scanner("#bytes\n" + "0-100 100-300 300-");
+        //Scanner sc = new Scanner("#bytes\n" + "0-150 150-300 300-400 400-");
+        Scanner sc = new Scanner("packetsize\n0-62 62-250 250-\n#packets\n0-5 5-11 11-");
 
         while (sc.hasNextLine()) {
             // read key line
@@ -70,7 +71,7 @@ public class SymbolConfig {
         for (Pair<String, List<Range>> pair : this.config) {
             String key = pair.getKey();
             // get value from NetFlow
-            Long value = getValue(key, netFlow);
+            Double value = getValue(key, netFlow);
             if (value == null) {
                 continue;
             }
@@ -106,22 +107,24 @@ public class SymbolConfig {
      * @param netFlow
      * @return
      */
-    protected Long getValue(String key, NetFlow netFlow) {
+    protected Double getValue(String key, NetFlow netFlow) {
         switch (key) {
+            case "packetsize":
+                return netFlow.averagePacketSize;
             case "#bytes":
-                return netFlow.byteCount;
+                return Double.valueOf(netFlow.byteCount);
             case "#packets":
-                return netFlow.packetCount;
+                return Double.valueOf(netFlow.packetCount);
             case "duration":
-                return netFlow.end - netFlow.start;
+                return Double.valueOf(netFlow.end - netFlow.start);
         }
         return null;
     }
 
 
     protected class Range {
-        protected long low;
-        protected long high;
+        protected double low;
+        protected double high;
 
         public Range(String range) {
             String[] parts = range.split("-");
@@ -143,7 +146,7 @@ public class SymbolConfig {
          * @param value
          * @return
          */
-        public boolean inRange(long value) {
+        public boolean inRange(double value) {
             return (value >= low && value <= high);
         }
 
