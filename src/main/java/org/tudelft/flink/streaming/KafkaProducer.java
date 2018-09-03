@@ -22,8 +22,8 @@ public class KafkaProducer {
         org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(properties);
 
         //produceDebug(producer);
-        //producePatterns(producer);
-        replayStratosphere(producer);
+        producePatterns(producer);
+        //replayStratosphere(producer);
     }
 
     protected static void produceDebug(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
@@ -42,7 +42,7 @@ public class KafkaProducer {
     protected static void producePatterns(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
         PatternTester tester = new PatternTester();
         int counter = 0;
-        while (counter < 518000) {
+        while (counter < 10000) {
             counter++;
 
             Symbol next = tester.getNext();

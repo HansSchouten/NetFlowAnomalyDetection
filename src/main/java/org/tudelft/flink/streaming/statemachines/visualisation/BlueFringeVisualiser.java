@@ -49,7 +49,7 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
     public void writeToFile(String stateMachineID) {
         // get file path
         String cleanID = stateMachineID.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
-        String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+        String timeStamp = new SimpleDateFormat("HHmmss.SSS").format(Calendar.getInstance().getTime());
         String path = "output\\state-machines\\machine-" + cleanID + "-" + timeStamp + ".png";
         System.out.println(path);
         // write the graph to file
@@ -68,6 +68,9 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
         String cssClass = "";
         if (state.getColor() == State.Color.BLUE) {
             cssClass = "blue";
+        }
+        if (state.getColor() == State.Color.WHITE) {
+            cssClass = "white";
         }
         // define the label
         String label = "[" + state.getCount() + "]";
@@ -88,8 +91,33 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
             State next = state.getState(symbol, null);
             if (next.getColor() == State.Color.BLUE) {
                 this.addState(next);
+
+                // add white states of this blue state
+                addWhiteStates(next);
             }
         }
+    }
+
+    protected void addWhiteStates(State state) {
+        if (state.hasChildren()) {
+            for (Symbol symbol : state.getTransitions()) {
+                State next = state.getState(symbol, null);
+                this.addState(next);
+                // add transition
+                addTransition(state, symbol);
+                // recursive call to add childs
+                addWhiteStates(next);
+            }
+        }
+
+    }
+
+    protected void addTransition(State origin, Symbol symbol) {
+        String fromId = Integer.toString(origin.hashCode());
+        State to = origin.getState(symbol, null);
+        String label = symbol.toString();
+        String toId = Integer.toString(to.hashCode());
+        super.addTransition(fromId, toId, label);
     }
 
     /**

@@ -115,14 +115,14 @@ public class KafkaStateMachines {
         s1.increaseFrequency(f);
         //s2.increaseFrequency(f);
 
-        long[] sk1 = s1.getSketchVector();
+        float[] sk1 = s1.getSketchVector();
         for (int i = 0; i < sk1.length; i++) {
             System.out.print(sk1[i] + ",");
         }
 
         System.out.println("");
 
-        long[] sk2 = s2.getSketchVector();
+        float[] sk2 = s2.getSketchVector();
         for (int i = 0; i < sk2.length; i++) {
             System.out.print(sk2[i] + ",");
         }

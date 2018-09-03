@@ -22,11 +22,15 @@ public class State {
     protected double COSINE_SIMILARITY = 0.90;
     protected int DEPTH = 10;
     protected int WIDTH = 100;
+    /**
+     * For visualisation purposes.
+     */
     public boolean new_state = false;
 
     public enum Color {
         RED,
-        BLUE
+        BLUE,
+        WHITE
     }
 
     protected Map<Symbol, State> transitions;
@@ -62,6 +66,10 @@ public class State {
         return this.color;
     }
 
+    public void setCount(int count) {
+        this.count = count;
+    }
+
     public void setLabel(String label) {
         //this.label = label;
     }
@@ -70,13 +78,28 @@ public class State {
         return this.label;
     }
 
+    public void setDepth(int depth) {
+        this.depth = depth;
+    }
+
+    public int getDepth() {
+        return this.depth;
+    }
+
+    public boolean hasChildren() {
+        return this.transitions.size() > 0;
+    }
+
+    public CountMinSketch getSketch() {
+        return sketch;
+    }
+
     /**
      * Increase the occurrence frequency of this future in this state's sketch.
      *
      * @param future
      */
-    public void increaseFrequency(Queue<Symbol> future)
-    {
+    public void increaseFrequency(Queue<Symbol> future) {
         // since we compare without normalization, allow at most SIGNIFICANCE_BOUNDARY patterns in the sketch
         if (this.count < SIGNIFICANCE_BOUNDARY) {
             String signature = futureToString(future);
@@ -89,11 +112,11 @@ public class State {
 
         // increase transition count of the symbol that is the head of the queue
         Symbol transitionSymbol = future.peek();
-        int count = 1;
+        int transitionCount = 1;
         if (this.transitionCounts.containsKey(transitionSymbol)) {
-            count = this.transitionCounts.get(transitionSymbol) + 1;
+            transitionCount = this.transitionCounts.get(transitionSymbol) + 1;
         }
-        this.transitionCounts.put(transitionSymbol, count);
+        this.transitionCounts.put(transitionSymbol, transitionCount);
     }
 
     /**
@@ -150,6 +173,24 @@ public class State {
     }
 
     /**
+     * Return whether this state is the root state.
+     *
+     * @return
+     */
+    public boolean isRoot() {
+        return this.depth == 0;
+    }
+
+    /**
+     * Return whether the number of futures passed through this state is statistical significant for comparing state similarities.
+     *
+     * @return
+     */
+    public boolean isSignificant() {
+        return (this.count >= SIGNIFICANCE_BOUNDARY);
+    }
+
+    /**
      * Return the state in the direction of the given transition symbol.
      *
      * @param transition
@@ -160,9 +201,15 @@ public class State {
         if (this.transitions.containsKey(transition)) {
             return this.transitions.get(transition);
         } else {
-            // if no transition exists yet, but the state is part of the final State Machine, create a new blue state
-            if (this.color == Color.RED && this.depth < Math.max(StateMachineNetFlow.FUTURE_SIZE, 8)) {
-                State newState = new State(Color.BLUE, this.depth + 1);
+            if (this.depth < Math.max(StateMachineNetFlow.FUTURE_SIZE, 5)) {
+                // if no transition exists yet and the maximum depth is not yet reached, create a new blue or white state
+                Color newColor = Color.WHITE;
+                if (this.color == Color.RED) {
+                    newColor = Color.BLUE;
+                }
+                System.out.println("Creating new state with color " + newColor);
+
+                State newState = new State(newColor, this.depth + 1);
                 if (current_char != null) {
                     newState.setLabel(String.valueOf(current_char));
                 }
@@ -176,28 +223,27 @@ public class State {
     }
 
     /**
-     * Return whether the number of futures passed through this state is statistical significant for comparing state similarities.
-     *
-     * @return
-     */
-    public boolean isSignificant() {
-        return (this.count == SIGNIFICANCE_BOUNDARY);
-    }
-
-    /**
-     * Return whether this state is the root state.
-     *
-     * @return
-     */
-    public boolean isRoot() {
-        return this.depth == 0;
-    }
-
-    /**
      * Change the color of this state to red.
      */
     public void changeToRed() {
         this.color = Color.RED;
+    }
+
+    /**
+     * Change the color of this state to blue.
+     */
+    public void changeToBlue() {
+        this.color = Color.BLUE;
+    }
+
+    /**
+     * Update the color of all (currently white) child states to blue.
+     */
+    public void colorChildsBlue() {
+        for (Symbol symbol : this.transitions.keySet()) {
+            State child = getState(symbol, null);
+            child.changeToBlue();
+        }
     }
 
     /**
@@ -209,6 +255,46 @@ public class State {
         for (Symbol inLinkSymbol : this.inLinks.keySet()) {
             State origin = this.inLinks.get(inLinkSymbol);
             origin.setTransition(inLinkSymbol, redState);
+        }
+    }
+
+    /**
+     * Merge the childs of this state with the childs of the passed state that will remain to exist.
+     */
+    public void mergeChilds(State remainingState) {
+        // loop through all childs of this state
+        for (Symbol symbol : this.transitions.keySet()) {
+            State child = getState(symbol, null);
+
+            if (remainingState.hasTransition(symbol)) { // merge with corresponding child of the red state
+                State remainingChild = remainingState.getState(symbol, null);
+                remainingChild.mergeSketch(child.getSketch());
+                remainingChild.setCount(child.getCount() + remainingChild.getCount());
+                if (child.hasChildren()) {
+                    // recursive call to merge all childs deeper in the tree than the first child
+                    child.mergeChilds(remainingChild);
+                }
+            } else { // make this child a child of the red state
+                // update depth
+                child.setDepth(remainingState.getDepth() + 1);
+                // set transition from red state to child
+                remainingState.setTransition(symbol, child);
+                // replace current child inlink by an inlink from red state
+                child.addInLink(symbol, remainingState);
+            }
+        }
+    }
+
+    /**
+     * Merge the sketch of this state with the given other sketch.
+     *
+     * @param other
+     */
+    public void mergeSketch(CountMinSketch other) {
+        try {
+            this.sketch = CountMinSketch.merge(this.sketch, other);
+        } catch (Exception e) {
+            System.out.println("Exception on merging sketches: " + e.getMessage());
         }
     }
 
@@ -254,8 +340,8 @@ public class State {
      * @return
      */
     public double getSimilarity(State other) {
-        long[] sketch1 = this.getSketchVector();
-        long[] sketch2 = other.getSketchVector();
+        float[] sketch1 = this.getSketchVector();
+        float[] sketch2 = other.getSketchVector();
 
         /*
         System.out.println(this.hashCode() + ":");
@@ -275,9 +361,9 @@ public class State {
         return similarity;
     }
 
-    public long[] getSketchVector() {
-        long[] serialized_long = toLongArray(CountMinSketch.serialize(this.sketch));
-        long[] vector = new long[DEPTH * WIDTH];
+    public float[] getSketchVector() {
+        float[] serialized_long = toLongArray(CountMinSketch.serialize(this.sketch));
+        float[] vector = new float[DEPTH * WIDTH];
         // add all values (except the first two and after the first two, each WIDTH-th value since these are the hashes)
         int c = 0;
         for (int i = 2; i < serialized_long.length - 1; i++) {
@@ -295,12 +381,12 @@ public class State {
      * @param byteArray
      * @return
      */
-    protected long[] toLongArray(byte[] byteArray) {
-        long[] longArray = new long[byteArray.length / 8];
+    protected float[] toLongArray(byte[] byteArray) {
+        float[] longArray = new float[byteArray.length / 8];
         for (int i = 2; i < byteArray.length / 8; i++) {
             byte[] longBytes = Arrays.copyOfRange(byteArray, i*8, (i + 1)*8);
             ByteBuffer buffer = ByteBuffer.wrap(longBytes);
-            longArray[i] = buffer.getLong();
+            longArray[i] = buffer.getLong() / (float) this.count;
         }
         return longArray;
     }
@@ -312,7 +398,7 @@ public class State {
      * @param sketch2
      * @return The Chi Square distance between both sketches.
      */
-    protected double chiSquare(long[] sketch1, long[] sketch2) {
+    protected double chiSquare(float[] sketch1, float[] sketch2) {
         //double[] norm1 = normalize(sketch1);
         //double[] norm2 = normalize(sketch2);
 
@@ -330,7 +416,7 @@ public class State {
      * @param v2
      * @return
      */
-    protected double cosineSimilarity(long[] v1, long[] v2) {
+    protected double cosineSimilarity(float[] v1, float[] v2) {
         double dotProduct = 0.0;
         double normA = 0.0;
         double normB = 0.0;

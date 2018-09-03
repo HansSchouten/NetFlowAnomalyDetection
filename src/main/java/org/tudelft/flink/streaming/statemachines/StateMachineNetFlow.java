@@ -1,6 +1,7 @@
 package org.tudelft.flink.streaming.statemachines;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import javafx.util.Pair;
 import org.tudelft.flink.streaming.NetFlow;
 import org.tudelft.flink.streaming.statemachines.visualisation.BlueFringeVisualiser;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
@@ -18,13 +19,17 @@ public class StateMachineNetFlow extends NetFlow {
      */
     public static int FUTURE_SIZE = 4;
     /**
+     * Maximum number of instances past by one sequence of futures (prevents infinite loops).
+     */
+    public static int MAX_INSTANCE_DEPTH = 10;
+    /**
      * Show a visualisation of the learned State Machine.
      */
     public static boolean SHOW_VISUALISATION = false;
     /**
      * Show a visualisation for each step of learning the State Machine.
      */
-    public static boolean VISUALISE_STEPS = false;
+    public static boolean VISUALISE_STEPS = true;
     /**
      * Output a file containing the visualised State Machine.
      */
@@ -32,7 +37,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Turn on/off depending on whether we are running on NetFlow or PAutomaC sequences (with stop symbols).
      */
-    public static boolean PAUTOMAC_TEST = false;
+    public static boolean PAUTOMAC_TEST = true;
     /**
      * Output a file containing all encountered patterns (for debugging purposes).
      */
@@ -54,7 +59,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * The list of states in which the current future is evaluated (increasing the occurrence frequency of this future).
      */
-    public Map<Integer, State> instances;
+    public Map<Integer, Pair<Integer, State>> instances;
     /**
      * The list of all red states (states that are part of the final State Machine).
      */
@@ -77,6 +82,7 @@ public class StateMachineNetFlow extends NetFlow {
     public int skip_counter = 0;
 
     public char current_char = 'A';
+
     /**
      * The NetFlows inside this NetFlow.
      */
@@ -114,18 +120,9 @@ public class StateMachineNetFlow extends NetFlow {
             StateMachineNetFlow flow = new StateMachineNetFlow();
             flow.setFromJsonNode(parameters);
             flow.setSingleFlow();
+
             // symbolconfig is for testing purposes
             flow.symbolConfig = new SymbolConfig();
-
-            /*
-            // Eduroam skip massive StateMachine
-            if (flow.srcIP.equals("177.32.252.28") && flow.dstIP.equals("176.71.103.118")) {
-                continue;
-            }
-            if (flow.srcIP.equals("176.71.103.118") && flow.dstIP.equals("177.32.252.28")) {
-                continue;
-            }
-            */
 
             this.dataset.add(flow);
         }
@@ -149,32 +146,12 @@ public class StateMachineNetFlow extends NetFlow {
         }
     }
 
-    public long count = 0;
+    /**
+     * Consume an incoming NetFlow.
+     *
+     * @param nextNetFlow
+     */
     public void consumeNetFlow(StateMachineNetFlow nextNetFlow) {
-        if (nextNetFlow.dstPort.equals("445")) {
-            String newLine = nextNetFlow.toString();
-            appendFile(newLine);
-        }
-
-        if (this.count % 1000000 == 0 || this.count == 0) {
-            System.out.println("Number of flows processed: " + this.count);
-        }
-        this.count++;
-
-        if (true) {
-            return;
-        }
-
-
-
-
-
-
-
-        if (this.redStates.size() > 14) {
-            resetStateMachine();
-        }
-
         // start with processing this object, before processing all rolling NetFlows
         if (this.flow_counter == 0) {
             //System.out.println(this.stateMachineID + " reducing first NetFlow");
@@ -187,7 +164,7 @@ public class StateMachineNetFlow extends NetFlow {
             nextChar();
 
             this.instances = new HashMap<>();
-            this.instances.put(this.root.hashCode(), this.root);
+            this.instances.put(this.root.hashCode(), new Pair(0, this.root));
 
             this.redStates = new LinkedList<>();
             this.redStates.add(this.root);
@@ -208,6 +185,9 @@ public class StateMachineNetFlow extends NetFlow {
         //addForPercentile(nextNetFlow);
     }
 
+    /**
+     * Reset all parameters of this State Machine.
+     */
     public void resetStateMachine() {
         this.current_char = 'A';
         this.flow_counter = 0;
@@ -216,7 +196,7 @@ public class StateMachineNetFlow extends NetFlow {
     }
 
     /**
-     * Consume a new NetFlow and update rolling state parameters.
+     * Process the given NetFlow and update rolling state parameters.
      *
      * @param nextNetFlow
      */
@@ -245,16 +225,20 @@ public class StateMachineNetFlow extends NetFlow {
             // if we encounter a reset symbol, reset all instances      // DISABLE THIS BLOCK ON NETFLOW STREAMS
             Symbol resetSymbol = new Symbol("-1");
             for (Symbol futureSymbol : this.future) {
-                if (futureSymbol.equals(resetSymbol) || this.currentSymbol.equals(resetSymbol)) {
+                if (this.currentSymbol.equals(resetSymbol) || futureSymbol.equals(resetSymbol)) {
                     this.skip_counter++;
                     this.instances = new HashMap<>();
-                    this.instances.put(this.root.hashCode(), this.root);
+                    this.instances.put(this.root.hashCode(), new Pair(0, this.root));
+                    // update future for next iteration
+                    this.future.poll();
+                    this.future.add(incomingSymbol);
+                    // skip to next iteration
                     return;
                 }
             }
         } else {
             // all futures start in the root, so add the root to the list of states to evaluate the current future on
-            this.instances.put(this.root.hashCode(), this.root);      // ENABLE THIS LINE ON NETFLOW STREAMS
+            this.instances.put(this.root.hashCode(), new Pair(0, this.root));      // ENABLE THIS LINE ON NETFLOW STREAMS
         }
 
         // evaluate this future in all state instances (increasing the occurrence frequency of this future)
@@ -269,11 +253,13 @@ public class StateMachineNetFlow extends NetFlow {
      * Increase the occurrence frequency of the current future in the instance states and move each instance to the next state.
      */
     protected void evaluateInstances() {
-        Map<Integer, State> newInstances = new HashMap<>();
+        Map<Integer, Pair<Integer, State>> newInstances = new HashMap<>();
 
         for (Integer instanceKey : this.instances.keySet()) {
             // get instance state
-            State instance = this.instances.get(instanceKey);
+            Pair<Integer, State> pair = this.instances.get(instanceKey);
+            State instance = pair.getValue();
+            Integer instanceDepth = pair.getKey();
 
             // increase occurrence frequency of this future in this state
             instance.increaseFrequency(this.future);
@@ -281,6 +267,9 @@ public class StateMachineNetFlow extends NetFlow {
             // merge or color the state if a significant amount of futures are captured in this state
             if (instance.getColor() == State.Color.BLUE && instance.isSignificant()) {
                 log("Significant State: " + instance.hashCode());
+
+                // change white child states into blue states
+                instance.colorChildsBlue();
 
                 State mostSimilarState = instance.getMostSimilarState(this.redStates);
                 if (mostSimilarState == null) {
@@ -290,35 +279,26 @@ public class StateMachineNetFlow extends NetFlow {
                 } else {
                     // merge instance with red state (pointing all incoming transitions to the red state instead)
                     instance.merge(mostSimilarState);
+                    // merge all child states with the childs of the red state (or add new childs)
+                    instance.mergeChilds(mostSimilarState);
                     // continue evaluation in the red state the instance has merged with
                     instance = mostSimilarState;
                 }
 
-                if (VISUALISE_STEPS) {
-                    BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
-                    visualiser.visualise(this.redStates);
-                    visualiser.showVisualisation();
-                    visualiser.writeToFile(this.stateMachineID);
-                }
+                visualiseStep();
             }
 
             // get the next state in the direction of the symbol of the consumed NetFlow
             State next = instance.getState(this.currentSymbol, this.current_char);
             if (next != null && next.new_state) {
-                if (VISUALISE_STEPS) {
-                    BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
-                    visualiser.visualise(this.redStates);
-                    visualiser.showVisualisation();
-                    visualiser.writeToFile(this.stateMachineID);
-                }
+                visualiseStep();
                 next.new_state = false;
-
                 nextChar();
             }
 
             // if a state in the direction of the current symbol exists, add the next state to instances
-            if (next != null) {
-                newInstances.put(next.hashCode(), next);
+            if (next != null && instanceDepth < MAX_INSTANCE_DEPTH) {
+                newInstances.put(next.hashCode(), new Pair(instanceDepth + 1, next));
             }
         }
 
@@ -340,6 +320,18 @@ public class StateMachineNetFlow extends NetFlow {
         return this.symbolConfig.getSymbol(netFlow);
     }
 
+    protected void visualiseStep() {
+        if (VISUALISE_STEPS) {
+            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
+            visualiser.visualise(this.redStates);
+            //visualiser.showVisualisation();
+            visualiser.writeToFile(this.stateMachineID);
+
+            System.out.println("flows:" + this.flow_counter);
+            System.out.println("skipped: " + this.skip_counter);
+        }
+    }
+
     /**
      * Return the string representation of this rolling StateMachineNetFlow.
      *
@@ -347,6 +339,7 @@ public class StateMachineNetFlow extends NetFlow {
      */
     @Override
     public String toString() {
+        /*
         if (true) {
             return this.srcIP
                 + "," + this.srcPort
@@ -364,6 +357,7 @@ public class StateMachineNetFlow extends NetFlow {
         if (true) {
             return "";
         }
+        */
 
         log(this.stateMachineID + " has " + this.flow_counter + " flows");
         log("#skipped sequences due to stop symbol: " + Integer.toString(this.skip_counter));
@@ -483,7 +477,7 @@ public class StateMachineNetFlow extends NetFlow {
      * @param message
      */
     public void log(String message) {
-        //System.out.println(message);
+        System.out.println(message);
     }
 
     public List<Double> packetSizes;

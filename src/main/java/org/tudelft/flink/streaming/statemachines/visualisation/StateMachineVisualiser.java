@@ -21,6 +21,7 @@ public class StateMachineVisualiser {
         this.graph.addAttribute("ui.quality");
         this.graph.addAttribute("ui.stylesheet",
                 "node { size: 28; fill-color: rgb(244, 98, 66); text-size: 16; text-color: #FFF; }" +
+                        "node.white { fill-color: #FFF; text-color: #000; }" +
                         "node.blue { fill-color: rgb(65, 166, 244); }" +
                         "node.root { fill-color: orange; }" +
                         "edge { text-size: 16; }"
