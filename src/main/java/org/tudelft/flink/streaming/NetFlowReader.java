@@ -22,7 +22,7 @@ public class NetFlowReader {
 
     protected int resetCount = 0;
 
-    final int MAX_RESETS = 2;
+    final int MAX_RESETS = 0;
 
     public enum Format {
         STRATOSPHERE,
@@ -46,6 +46,8 @@ public class NetFlowReader {
                 return false;
             }
             this.resetCount++;
+
+            System.out.println("Resetting file #" + this.resetCount);
 
             try {
                 File file = new File(this.path);
@@ -93,7 +95,7 @@ public class NetFlowReader {
         JSONObject jsonFlow = new JSONObject();
 
         String[] args_raw = this.nextLine.split(" ");
-        List<String> args = new ArrayList<String>(Arrays.asList(args_raw));
+        List<String> args = new ArrayList<>(Arrays.asList(args_raw));
         args.removeAll(Collections.singleton(null));
         args.removeAll(Collections.singleton(""));
 
@@ -181,19 +183,52 @@ public class NetFlowReader {
 
         String[] args = this.nextLine.split(",");
 
+        if (!getProtocolCode(args[2]).equals("17") && !getProtocolCode(args[2]).equals("6")) {
+            return null;
+        }
+
+        if (!args[3].equals("192.168.1.130") && !args[5].equals("192.168.1.130")) {
+            return null;
+        }
+
         try {
+            JSONArray jsonFlowDataInner = new JSONArray();
+
+            String srcPort = args[4];
+            try {
+                Integer.parseInt(args[4]);
+            } catch (Exception ex) {
+                srcPort = "0";
+            }
+            String dstPort = args[6];
+            try {
+                Integer.parseInt(args[6]);
+            } catch (Exception ex) {
+                dstPort = "0";
+            }
+
             JSONArray jsonFlowData = new JSONArray();
-            jsonFlowData.put(createArg(1, "0x" + Long.toHexString(Long.valueOf(args[9]) + Long.valueOf(args[10]) )));
-            jsonFlowData.put(createArg(2, "0x" + Long.toHexString(Long.valueOf(args[7]) + Long.valueOf(args[8]) )));
+            jsonFlowData.put(createArg(1, "0x" + Long.toHexString(Long.valueOf(args[9]) )));
+            jsonFlowData.put(createArg(2, "0x" + Long.toHexString(Long.valueOf(args[7]) )));
             jsonFlowData.put(createArg(4, getProtocolCode(args[2])));
-            jsonFlowData.put(createArg(7, args[4]));
+            jsonFlowData.put(createArg(7, srcPort));
             jsonFlowData.put(createArg(8, args[3]));
-            //jsonFlowData.put(createArg(11, args[6]));    // issue in Dport export
+            jsonFlowData.put(createArg(11, dstPort));    // issue in Dport export
             jsonFlowData.put(createArg(12, args[5]));
             jsonFlowData.put(createArg(21, "0"));
             jsonFlowData.put(createArg(22, "0"));
+            jsonFlowDataInner.put(jsonFlowData);
 
-            JSONArray jsonFlowDataInner = new JSONArray();
+            jsonFlowData = new JSONArray();
+            jsonFlowData.put(createArg(1, "0x" + Long.toHexString(Long.valueOf(args[10]) )));
+            jsonFlowData.put(createArg(2, "0x" + Long.toHexString(Long.valueOf(args[8]) )));
+            jsonFlowData.put(createArg(4, getProtocolCode(args[2])));
+            jsonFlowData.put(createArg(7, dstPort));    // issue in Dport export
+            jsonFlowData.put(createArg(8, args[5]));
+            jsonFlowData.put(createArg(11, srcPort));
+            jsonFlowData.put(createArg(12, args[3]));
+            jsonFlowData.put(createArg(21, "0"));
+            jsonFlowData.put(createArg(22, "0"));
             jsonFlowDataInner.put(jsonFlowData);
 
             jsonFlow.put("DataSets", jsonFlowDataInner);

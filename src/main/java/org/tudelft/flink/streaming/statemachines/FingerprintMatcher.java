@@ -1,5 +1,7 @@
 package org.tudelft.flink.streaming.statemachines;
 
+import org.apache.hadoop.yarn.state.StateMachine;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +24,7 @@ public class FingerprintMatcher {
         //loadFingerprint("output\\fingerprints\\emotet\\f3\\traces.txt", "Emotet 3");
 
         // kovner
+        /*
         loadFingerprint("output\\fingerprints\\5min\\kovner\\f1\\traces.txt", "Kovner 1");
 
         loadFingerprint("output\\fingerprints\\5min\\135-1-Stlrat-(mixed-3).txt", "Stlrat");
@@ -37,6 +40,21 @@ public class FingerprintMatcher {
         loadFingerprint("output\\fingerprints\\5min\\htbot\\348-1-HTBot-tcp-4.txt", "HTBot - TCP 4");
         loadFingerprint("output\\fingerprints\\5min\\adload\\349-1-Adload-udp-1.txt", "Adload - UDP 1");
         loadFingerprint("output\\fingerprints\\5min\\adload\\349-1-Adload-udp-2.txt", "Adload - UDP 2");
+        */
+
+        //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-46.165.223.90-TCP-161931.txt", "HTbot - Type I.1 - 46.165.223.90");
+        //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-95.215.46.247-TCP-161932.txt", "HTbot - Type I.2 - 95.215.46.247");
+            //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-185.86.148.106-TCP-161926.txt", "HTbot - Type II - 185.86.148.106 A - Step 1");
+            //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-185.86.148.106-TCP-161927.txt", "HTbot - Type II - 185.86.148.106 A - Step 2");
+            //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-185.86.148.106-TCP-161928.txt", "HTbot - Type II - 185.86.148.106 A - Step 3");
+        //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-188.0.236.107-TCP-161928.txt", "HTbot - Type IV - 188.0.236.107 - Step 1");
+        //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-188.0.236.107-TCP-161930.txt", "HTbot - Type IV - 188.0.236.107 - Step 2");
+        //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-188.0.236.107-TCP-161931.txt", "HTbot - Type IV - 188.0.236.107 - Step 3");
+
+        loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.74-TCP-161929.txt", "HTbot - Type I - 195.113.232.74 HTTP A - Step 1");
+        //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.74-TCP-161931.txt", "HTbot - Type V.1 - 195.113.232.74 A - Step 2");
+        loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.80-TCP-161927.txt", "HTbot - Type I - 195.113.232.80 HTTP A - Step 1");
+        //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.80-TCP-161931.txt", "HTbot - Type V.2 - 195.113.232.80 A - Step 2");
 
         System.out.println(this.fingerprints.size() + " fingerprint(s) loaded");
     }
@@ -60,12 +78,17 @@ public class FingerprintMatcher {
     /**
      * Match the State Machine of the given root state with all loaded fingerprints.
      *
-     * @param root
-     * @param stateMachineID
+     * @param statemachine
      */
-    public void match(State root, String stateMachineID) {
+    public void match(StateMachineNetFlow statemachine) {
         for (Fingerprint fingerprint : this.fingerprints) {
-            boolean match = fingerprint.match(root, stateMachineID);
+            try {
+                boolean match = fingerprint.match(statemachine.root, statemachine.stateMachineID);
+                if (match) {
+                    statemachine.visualiseMalwareModel();
+                }
+            } catch (Exception ex) {
+            }
         }
     }
 

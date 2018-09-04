@@ -21,7 +21,7 @@ public class StateMachineNetFlowSchema implements DeserializationSchema<StateMac
 
         // TODO: read SymbolConfig from getGlobalJobParameters
         // https://brewing.codes/2017/10/24/flink-additional-data/
-        flow.symbolConfig = new SymbolConfig();
+        //flow.symbolConfig = new SymbolConfig();
 
         return flow;
     }

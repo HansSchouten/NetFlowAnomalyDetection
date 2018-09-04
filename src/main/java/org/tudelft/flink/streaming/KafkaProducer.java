@@ -22,8 +22,8 @@ public class KafkaProducer {
         org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(properties);
 
         //produceDebug(producer);
-        producePatterns(producer);
-        //replayStratosphere(producer);
+        //producePatterns(producer);
+        replayStratosphere(producer);
     }
 
     protected static void produceDebug(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
@@ -98,9 +98,9 @@ public class KafkaProducer {
             //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\346-1-Dridex.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
             //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\347-1-BitCoinMiner.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
         //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\348-1-HTBot.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
-        NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\349-1-Adload.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\349-1-Adload.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
 
-        reader.resetOnEnd(true);
+        NetFlowReader reader = new NetFlowReader("input\\malware-samples\\348-1-HTBot.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
 
         int counter = 0;
         while (counter >= 0) {

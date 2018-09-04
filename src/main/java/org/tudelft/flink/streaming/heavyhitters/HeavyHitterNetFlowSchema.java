@@ -30,8 +30,8 @@ public class HeavyHitterNetFlowSchema implements DeserializationSchema<HeavyHitt
     public void setRandomValues(HeavyHitterNetFlow netflow) {
         netflow.srcIP = (String) srcIPs.randomEntry();
         netflow.dstIP = (String) dstIPs.randomEntry();
-        netflow.srcPort = (String) srcPorts.randomEntry();
-        netflow.dstPort = (String) dstPorts.randomEntry();
+        netflow.srcPort = (Integer) srcPorts.randomEntry();
+        netflow.dstPort = (Integer) dstPorts.randomEntry();
     }
 
     @Override

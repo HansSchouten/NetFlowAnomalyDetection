@@ -18,8 +18,8 @@ public class NetFlow implements Serializable {
     public Protocol protocol = Protocol.UNKNOWN;
     public String srcIP;
     public String dstIP;
-    public String srcPort;
-    public String dstPort;
+    public Integer srcPort;
+    public Integer dstPort;
     public String IPPair;
     public String IPPairProtocol;
     public String symbol;
@@ -65,15 +65,18 @@ public class NetFlow implements Serializable {
             storeElement(id, value);
         }
 
+        /*
         // store ip pair (with lowest ip first)
         if (this.srcIP.hashCode() < this.dstIP.hashCode()) {
             this.IPPair = this.srcIP + "," + this.dstIP;
         } else {
             this.IPPair = this.dstIP + "," + this.srcIP;
         }
+        */
+        this.IPPair = this.srcIP + "," + this.dstIP;
         this.IPPairProtocol = this.IPPair + "," + this.protocol.toString();
         // collect all flows in one stream for debugging
-        this.IPPairProtocol = "DEBUG";
+        //this.IPPairProtocol = "DEBUG";
 
         // compute average packet size
         this.averagePacketSize = 0;
@@ -117,13 +120,13 @@ public class NetFlow implements Serializable {
                 }
                 break;
             case 7:
-                this.srcPort = value;
+                this.srcPort = Integer.parseInt(value);
                 break;
             case 8:
                 this.srcIP = value;
                 break;
             case 11:
-                this.dstPort = value;
+                this.dstPort = Integer.parseInt(value);
                 break;
             case 12:
                 this.dstIP = value;

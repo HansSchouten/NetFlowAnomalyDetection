@@ -11,7 +11,7 @@ public class State {
     /**
      * the number of futures processed by a state at which the state is merged or becomes a red state.
      */
-    public final int SIGNIFICANCE_BOUNDARY = 100;
+    public final int SIGNIFICANCE_BOUNDARY = 50;
     /**
      * the upper bound of the Chi-distance below which the sketches are regarded as similar.
      */
@@ -207,7 +207,6 @@ public class State {
                 if (this.color == Color.RED) {
                     newColor = Color.BLUE;
                 }
-                System.out.println("Creating new state with color " + newColor);
 
                 State newState = new State(newColor, this.depth + 1);
                 if (current_char != null) {

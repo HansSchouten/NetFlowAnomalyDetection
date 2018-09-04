@@ -30,8 +30,8 @@ public class FrequentPatternNetFlowSchema implements DeserializationSchema<Frequ
     public void setRandomValues(FrequentPatternNetFlow netflow) {
         netflow.srcIP = (String) srcIPs.randomEntry();
         netflow.dstIP = (String) dstIPs.randomEntry();
-        netflow.srcPort = (String) srcPorts.randomEntry();
-        netflow.dstPort = (String) dstPorts.randomEntry();
+        netflow.srcPort = (Integer) srcPorts.randomEntry();
+        netflow.dstPort = (Integer) dstPorts.randomEntry();
     }
 
     @Override

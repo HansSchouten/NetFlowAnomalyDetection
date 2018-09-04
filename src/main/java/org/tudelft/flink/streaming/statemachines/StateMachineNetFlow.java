@@ -22,27 +22,29 @@ public class StateMachineNetFlow extends NetFlow {
      * Maximum number of instances past by one sequence of futures (prevents infinite loops).
      */
     public static int MAX_INSTANCE_DEPTH = 10;
+
+
     /**
-     * Show a visualisation of the learned State Machine.
+     * Different execution modes.
      */
-    public static boolean SHOW_VISUALISATION = false;
+    public enum Mode {
+        PAUTOMAC_VALIDATION,        // process PAutomaC sequences, containing stop symbols.
+        LEARN_ATTACK_MODELS,
+        REALTIME_DETECTION
+    }
+    /**
+     * The current execution mode.
+     */
+    public Mode mode = Mode.LEARN_ATTACK_MODELS;
     /**
      * Show a visualisation for each step of learning the State Machine.
      */
-    public static boolean VISUALISE_STEPS = true;
-    /**
-     * Output a file containing the visualised State Machine.
-     */
-    public static boolean OUTPUT_VISUALISATION_FILE = true;
-    /**
-     * Turn on/off depending on whether we are running on NetFlow or PAutomaC sequences (with stop symbols).
-     */
-    public static boolean PAUTOMAC_TEST = true;
+    public static boolean VISUALISE_STEPS = false;
     /**
      * Output a file containing all encountered patterns (for debugging purposes).
      */
     public static boolean OUTPUT_PATTERN_FILE = false;
-    //public PatternFileOutput patternFileOutput = new PatternFileOutput(FUTURE_SIZE);
+
 
     /**
      * The root node of the State Machine.
@@ -80,27 +82,29 @@ public class StateMachineNetFlow extends NetFlow {
      * Number of skipped futures, due to encountering stop symbols.
      */
     public int skip_counter = 0;
-
-    public char current_char = 'A';
-
     /**
-     * The NetFlows inside this NetFlow.
+     * Label of the next state that will be added.
      */
-    public List<StateMachineNetFlow> dataset;
+    public char current_char = 'A';
     /**
      * The number of red states at which the last visualisation is made.
      */
-    public int redStateVisualiseCount = 1;
+    public int previousRedStateCount = 1;
     /**
      * Object for matching this State Machine with known fingerprints.
      */
     public FingerprintMatcher fingerprintMatcher;
-
     /**
-     * StateMachineNetFlow constructor.
+     * Object for outputting the observed NetFlow sequences.
      */
-    public StateMachineNetFlow() {
-    }
+    //public PatternFileOutput patternFileOutput = new PatternFileOutput(FUTURE_SIZE);
+    /**
+     * The NetFlows inside this NetFlow.
+     */
+    public List<StateMachineNetFlow> dataset;
+
+    public boolean completed = false;
+
 
     /**
      * Set NetFlow parameters from the given input string.
@@ -120,10 +124,6 @@ public class StateMachineNetFlow extends NetFlow {
             StateMachineNetFlow flow = new StateMachineNetFlow();
             flow.setFromJsonNode(parameters);
             flow.setSingleFlow();
-
-            // symbolconfig is for testing purposes
-            flow.symbolConfig = new SymbolConfig();
-
             this.dataset.add(flow);
         }
     }
@@ -132,57 +132,27 @@ public class StateMachineNetFlow extends NetFlow {
         this.stateMachineID = this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();
     }
 
-    public void appendFile(String line) {
-        try
-        {
-            String filename= "smb.log";
-            FileWriter fw = new FileWriter(filename,true);
-            fw.write(line + "\n");
-            fw.close();
-        }
-        catch(IOException ioe)
-        {
-            System.err.println("IOException: " + ioe.getMessage());
-        }
-    }
-
     /**
      * Consume an incoming NetFlow.
      *
      * @param nextNetFlow
      */
     public void consumeNetFlow(StateMachineNetFlow nextNetFlow) {
+        /*
+        if (nextNetFlow.protocol != Protocol.TCP || this.completed || nextNetFlow.dstPort != 80) {
+            return;
+        }
+        */
+
         // start with processing this object, before processing all rolling NetFlows
         if (this.flow_counter == 0) {
-            //System.out.println(this.stateMachineID + " reducing first NetFlow");
-            long now = System.nanoTime();
-            log(String.valueOf(now));
-
-            this.future = new LinkedList<>();
-            this.root = new State(State.Color.RED, 0);
-            this.root.setLabel(String.valueOf(this.current_char));
-            nextChar();
-
-            this.instances = new HashMap<>();
-            this.instances.put(this.root.hashCode(), new Pair(0, this.root));
-
-            this.redStates = new LinkedList<>();
-            this.redStates.add(this.root);
-
-            log(Integer.toString(this.root.hashCode()));
-            log("=====");
+            System.out.println(this.stateMachineID + " reducing first NetFlow");
+            resetStateMachine();
             processFlow(this);
-            //addForPercentile(this);
         }
 
-        if (this.redStates.size() > redStateVisualiseCount && this.redStates.size() > 6) {
-            this.toString();
-            this.redStateVisualiseCount++;
-        }
-
-        // process incoming NetFlow
         processFlow(nextNetFlow);
-        //addForPercentile(nextNetFlow);
+        performModeSpecificAction();
     }
 
     /**
@@ -192,7 +162,64 @@ public class StateMachineNetFlow extends NetFlow {
         this.current_char = 'A';
         this.flow_counter = 0;
         this.skip_counter = 0;
-        this.redStateVisualiseCount = 1;
+        this.previousRedStateCount = 1;
+
+        this.future = new LinkedList<>();
+        this.root = new State(State.Color.RED, 0);
+        this.root.setLabel(String.valueOf(this.current_char));
+        nextChar();
+
+        this.instances = new HashMap<>();
+        this.instances.put(this.root.hashCode(), new Pair(0, this.root));
+
+        this.redStates = new LinkedList<>();
+        this.redStates.add(this.root);
+
+        // symbol config should be published across nodes
+        this.symbolConfig = new SymbolConfig();
+    }
+
+    /**
+     * Perform an action corresponding to the current mode, if the model has changed.
+     */
+    public void performModeSpecificAction() {
+        if (this.redStates.size() >= 1 && this.redStates.size() > previousRedStateCount) {
+            this.previousRedStateCount++;
+
+            if (this.mode == Mode.LEARN_ATTACK_MODELS) {
+                visualiseMalwareModel();
+            } else if (this.mode == Mode.REALTIME_DETECTION) {
+                matchMalware();
+                if (this.redStates.size() > 12) {
+                    resetStateMachine();
+                    this.completed = true;
+                }
+            } else if(this.mode == Mode.PAUTOMAC_VALIDATION) {
+            }
+        }
+    }
+
+    /**
+     * Visualise the current progress of learning a malware model.
+     */
+    public void visualiseMalwareModel() {
+        BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
+        visualiser.visualise(this.redStates);
+        visualiser.writeToFile(this.stateMachineID);
+        outputRandomTraces();
+    }
+
+    /**
+     * Match this State Machine with malware fingerprints.
+     */
+    public void matchMalware() {
+        // initialise fingerprint matcher
+        if (this.fingerprintMatcher == null) {
+            this.fingerprintMatcher = new FingerprintMatcher();
+            this.fingerprintMatcher.loadFingerprints();
+        }
+
+        this.fingerprintMatcher.match(this);
     }
 
     /**
@@ -203,6 +230,7 @@ public class StateMachineNetFlow extends NetFlow {
     public void processFlow(StateMachineNetFlow nextNetFlow) {
         // increase the counter, keeping track of how many flows are reduced into this object
         this.flow_counter++;
+        //addForPercentile(nextNetFlow);
 
         // get the symbol of the incoming NetFlow
         Symbol incomingSymbol = getSymbol(nextNetFlow);
@@ -221,8 +249,8 @@ public class StateMachineNetFlow extends NetFlow {
             //patternFileOutput.addPattern(this.future);
         }
 
-        if (PAUTOMAC_TEST) {
-            // if we encounter a reset symbol, reset all instances      // DISABLE THIS BLOCK ON NETFLOW STREAMS
+        if (this.mode == Mode.PAUTOMAC_VALIDATION) {
+            // if we encounter a reset symbol, reset all instances
             Symbol resetSymbol = new Symbol("-1");
             for (Symbol futureSymbol : this.future) {
                 if (this.currentSymbol.equals(resetSymbol) || futureSymbol.equals(resetSymbol)) {
@@ -238,7 +266,7 @@ public class StateMachineNetFlow extends NetFlow {
             }
         } else {
             // all futures start in the root, so add the root to the list of states to evaluate the current future on
-            this.instances.put(this.root.hashCode(), new Pair(0, this.root));      // ENABLE THIS LINE ON NETFLOW STREAMS
+            this.instances.put(this.root.hashCode(), new Pair(0, this.root));
         }
 
         // evaluate this future in all state instances (increasing the occurrence frequency of this future)
@@ -266,17 +294,17 @@ public class StateMachineNetFlow extends NetFlow {
 
             // merge or color the state if a significant amount of futures are captured in this state
             if (instance.getColor() == State.Color.BLUE && instance.isSignificant()) {
-                log("Significant State: " + instance.hashCode());
-
                 // change white child states into blue states
                 instance.colorChildsBlue();
 
                 State mostSimilarState = instance.getMostSimilarState(this.redStates);
                 if (mostSimilarState == null) {
+                    log("New red state");
                     // color state red if it could not be merged with any other red state
                     instance.changeToRed();
                     this.redStates.add(instance);
                 } else {
+                    log("Merge with red state, " + this.redStates.size() + " red states");
                     // merge instance with red state (pointing all incoming transitions to the red state instead)
                     instance.merge(mostSimilarState);
                     // merge all child states with the childs of the red state (or add new childs)
@@ -340,25 +368,6 @@ public class StateMachineNetFlow extends NetFlow {
     @Override
     public String toString() {
         /*
-        if (true) {
-            return this.srcIP
-                + "," + this.srcPort
-                + "," + this.protocol
-                + "," + this.dstIP
-                + "," + this.dstPort
-                + "," + this.byteCount
-                + "," + this.packetCount
-                + "," + (int) this.averagePacketSize;
-        }
-
-        // match with malware fingerprints
-        this.matchMalware(this.stateMachineID);
-
-        if (true) {
-            return "";
-        }
-        */
-
         log(this.stateMachineID + " has " + this.flow_counter + " flows");
         log("#skipped sequences due to stop symbol: " + Integer.toString(this.skip_counter));
         long now = System.nanoTime();
@@ -380,12 +389,20 @@ public class StateMachineNetFlow extends NetFlow {
         }
 
         if (OUTPUT_PATTERN_FILE) {
-            //this.patternFileOutput.writeToFile(this.stateMachineID);
+            this.patternFileOutput.writeToFile(this.stateMachineID);
         }
 
         //printPercentiles();
+        */
 
-        return "";
+        return this.srcIP
+                + "," + this.srcPort
+                + "," + this.protocol
+                + "," + this.dstIP
+                + "," + this.dstPort
+                + "," + this.byteCount
+                + "," + this.packetCount
+                + "," + (int) this.averagePacketSize;
     }
 
     /**
@@ -397,24 +414,6 @@ public class StateMachineNetFlow extends NetFlow {
         int value = this.current_char;
         this.current_char = Character.valueOf((char) (value + 1));
         return this.current_char;
-    }
-
-    /**
-     * Match this State Machine with malware fingerprints.
-     *
-     * @param stateMachineID
-     */
-    public void matchMalware(String stateMachineID) {
-        if (this.redStates.size() <= 2) {
-            return;
-        }
-
-        if (this.fingerprintMatcher == null) {
-            this.fingerprintMatcher = new FingerprintMatcher();
-            this.fingerprintMatcher.loadFingerprints();
-        }
-
-        this.fingerprintMatcher.match(this.root, stateMachineID);
     }
 
     /**
@@ -477,8 +476,13 @@ public class StateMachineNetFlow extends NetFlow {
      * @param message
      */
     public void log(String message) {
-        System.out.println(message);
+        //System.out.println(message);
     }
+
+
+
+
+
 
     public List<Double> packetSizes;
     public List<Long> packetCounts;
@@ -499,25 +503,48 @@ public class StateMachineNetFlow extends NetFlow {
     public void printPercentiles() {
         System.out.println();
 
+
         Collections.sort(this.packetSizes);
-        int index = (int) Math.floor(this.packetSizes.size() / 3);
+        int index = (int) Math.floor(this.packetSizes.size() / 4);
         System.out.println("Packet Sizes");
         System.out.println(this.packetSizes.get(0));
-        System.out.println("33th percentile: " + this.packetSizes.get(index));
-        index = (int) Math.floor(this.packetSizes.size() / 3 * 2);
-        System.out.println("66th percentile: " + this.packetSizes.get(index));
+
+        System.out.println("25th percentile: " + this.packetSizes.get(index));
+        index = (int) Math.floor(this.packetSizes.size() / 4 * 2);
+
+        System.out.println("50th percentile: " + this.packetSizes.get(index));
+        index = (int) Math.floor(this.packetSizes.size() / 4 * 3);
+
+        System.out.println("75th percentile: " + this.packetSizes.get(index));
         System.out.println(this.packetSizes.get(this.packetSizes.size()-1));
         System.out.println();
 
+
         Collections.sort(this.packetCounts);
-        index = (int) Math.floor(this.packetCounts.size() / 3);
+        index = (int) Math.floor(this.packetCounts.size() / 4);
         System.out.println("Number of packets per flow");
         System.out.println(this.packetCounts.get(0));
-        System.out.println("33th percentile: " + this.packetCounts.get(index));
-        index = (int) Math.floor(this.packetCounts.size() / 3 * 2);
-        System.out.println("66th percentile: " + this.packetCounts.get(index));
+
+        System.out.println("25th percentile: " + this.packetCounts.get(index));
+        index = (int) Math.floor(this.packetCounts.size() / 4 * 2);
+
+        System.out.println("50th percentile: " + this.packetCounts.get(index));
+        index = (int) Math.floor(this.packetCounts.size() / 4 * 3);
+
+        System.out.println("75th percentile: " + this.packetCounts.get(index));
         System.out.println(this.packetCounts.get(this.packetCounts.size()-1));
         System.out.println();
+    }
+
+    public void appendFile(String line) {
+        try {
+            String filename= "output\\" + this.stateMachineID + ".txt";
+            FileWriter fw = new FileWriter(filename,true);
+            fw.write(line + "\n");
+            fw.close();
+        } catch(IOException ex) {
+            System.err.println("IOException: " + ex.getMessage());
+        }
     }
 
 }

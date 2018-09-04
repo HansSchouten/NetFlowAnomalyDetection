@@ -1,5 +1,7 @@
 package org.tudelft.flink.streaming.statemachines;
 
+import org.tudelft.flink.streaming.statemachines.visualisation.BlueFringeVisualiser;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.*;
@@ -11,7 +13,7 @@ public class Fingerprint {
     protected String name;
 
     protected double previousDistance;
-    public static double MATCH_THRESHOLD = 0.2;
+    public static double MATCH_THRESHOLD = 1.0;
     public static double MIN_PROBABILITY = 0.000001;
 
     /**
@@ -57,7 +59,7 @@ public class Fingerprint {
         this.previousDistance = KLDivergence(this.probabilities, otherProbabilities);
         boolean match = this.previousDistance <= MATCH_THRESHOLD;
 
-        if (this.previousDistance < 3) {
+        if (this.previousDistance < 1) {
             System.out.println(stateMachineID + " matches with " + this.getName() + "! KL Distance: " + this.previousDistance);
         }
         return match;
@@ -82,8 +84,12 @@ public class Fingerprint {
                     chance = 0;
                     break;
                 }
-                chance *= state.getTransitionProbability(symbol);
                 state = state.getState(symbol, null);
+                if (state.getColor() != State.Color.RED) {
+                    chance = 0;
+                    break;
+                }
+                chance *= state.getTransitionProbability(symbol);
             }
             chance = Math.max(chance, MIN_PROBABILITY);
 
