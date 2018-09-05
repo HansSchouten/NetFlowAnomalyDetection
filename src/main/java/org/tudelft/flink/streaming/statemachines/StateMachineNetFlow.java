@@ -35,7 +35,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * The current execution mode.
      */
-    public Mode mode = Mode.LEARN_ATTACK_MODELS;
+    public Mode mode = Mode.REALTIME_DETECTION;
     /**
      * Show a visualisation for each step of learning the State Machine.
      */
@@ -129,7 +129,7 @@ public class StateMachineNetFlow extends NetFlow {
     }
 
     public void setSingleFlow() {
-        this.stateMachineID = this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();
+        this.stateMachineID = this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();// + "-day" + this.start;
     }
 
     /**
@@ -138,15 +138,14 @@ public class StateMachineNetFlow extends NetFlow {
      * @param nextNetFlow
      */
     public void consumeNetFlow(StateMachineNetFlow nextNetFlow) {
-        /*
-        if (nextNetFlow.protocol != Protocol.TCP || this.completed || nextNetFlow.dstPort != 80) {
+        if (nextNetFlow.protocol != Protocol.TCP || this.completed) { // || this.dstPort != "443") {
+            this.completed = true;
             return;
         }
-        */
 
         // start with processing this object, before processing all rolling NetFlows
         if (this.flow_counter == 0) {
-            System.out.println(this.stateMachineID + " reducing first NetFlow");
+            //System.out.println(this.stateMachineID + " reducing first NetFlow");
             resetStateMachine();
             processFlow(this);
         }
@@ -190,7 +189,7 @@ public class StateMachineNetFlow extends NetFlow {
                 visualiseMalwareModel();
             } else if (this.mode == Mode.REALTIME_DETECTION) {
                 matchMalware();
-                if (this.redStates.size() > 12) {
+                if (this.redStates.size() >= 20) {
                     resetStateMachine();
                     this.completed = true;
                 }
@@ -202,11 +201,27 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Visualise the current progress of learning a malware model.
      */
-    public void visualiseMalwareModel() {
+    public void visualiseMatchingMalwareModel() {
         BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
         visualiser.visualise(this.redStates);
         visualiser.writeToFile(this.stateMachineID);
-        outputRandomTraces();
+    }
+
+    /**
+     * Visualise the current progress of learning a malware model.
+     */
+    public int increasing_int = 0;
+    public void visualiseMalwareModel() {
+        BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
+        String tmp = this.stateMachineID;
+        this.stateMachineID += "-" + this.increasing_int;
+        this.increasing_int++;
+        visualiser.visualise(this.redStates);
+        visualiser.writeToFile(this.stateMachineID);
+        if (this.mode == Mode.LEARN_ATTACK_MODELS) {
+            outputRandomTraces();
+        }
+        this.stateMachineID = tmp;
     }
 
     /**
@@ -307,8 +322,6 @@ public class StateMachineNetFlow extends NetFlow {
                     log("Merge with red state, " + this.redStates.size() + " red states");
                     // merge instance with red state (pointing all incoming transitions to the red state instead)
                     instance.merge(mostSimilarState);
-                    // merge all child states with the childs of the red state (or add new childs)
-                    instance.mergeChilds(mostSimilarState);
                     // continue evaluation in the red state the instance has merged with
                     instance = mostSimilarState;
                 }
@@ -454,7 +467,7 @@ public class StateMachineNetFlow extends NetFlow {
         }
 
         String cleanID = this.stateMachineID.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
-        String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+        String timeStamp = new SimpleDateFormat("HHmmss.SSS").format(Calendar.getInstance().getTime());
         String path = "output\\state-machines\\traces-" + cleanID + "-" + timeStamp + ".txt";
         System.out.println(path);
         try {

@@ -1,7 +1,5 @@
 package org.tudelft.flink.streaming.statemachines;
 
-import org.tudelft.flink.streaming.statemachines.visualisation.BlueFringeVisualiser;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.*;
@@ -10,23 +8,37 @@ public class Fingerprint {
 
     protected Map<List<Symbol>, Double> traces;
     protected List<Double> probabilities;
+    protected String path;
     protected String name;
+    protected Integer step;
+    protected boolean isLoaded = false;
 
     protected double previousDistance;
     public static double MATCH_THRESHOLD = 1.0;
     public static double MIN_PROBABILITY = 0.000001;
 
     /**
-     * Load a fingerprint from file.
+     * Fingerprint constructor.
      *
      * @param path
      * @param name
+     * @param step
+     */
+    public Fingerprint(String path, String name, Integer step) {
+        this.path = path;
+        this.name = name;
+        this.step = step;
+    }
+
+    /**
+     * Load a fingerprint from file.
+     *
      * @throws Exception
      */
-    public void loadFingerprint(String path, String name) throws Exception {
+    public void loadFingerprint() throws Exception {
         this.probabilities = new ArrayList<>();
         this.traces = new HashMap<>();
-        this.name = name;
+        this.isLoaded = true;
 
         Scanner reader = new Scanner(new BufferedReader(new FileReader(path)));
         while (reader.hasNextLine()) {
@@ -55,11 +67,19 @@ public class Fingerprint {
      * @return
      */
     public boolean match(State root, String stateMachineID) {
+        if (! this.isLoaded) {
+            try {
+                loadFingerprint();
+            } catch (Exception ex) {
+                System.out.println("Error while loading: " + this.path);
+            }
+        }
+
+        System.out.println(this.getName() + ": " + this.previousDistance);
         List<Double> otherProbabilities = getProbabilities(root);
         this.previousDistance = KLDivergence(this.probabilities, otherProbabilities);
         boolean match = this.previousDistance <= MATCH_THRESHOLD;
-
-        if (this.previousDistance < 1) {
+        if (match) {
             System.out.println(stateMachineID + " matches with " + this.getName() + "! KL Distance: " + this.previousDistance);
         }
         return match;
@@ -84,12 +104,14 @@ public class Fingerprint {
                     chance = 0;
                     break;
                 }
-                state = state.getState(symbol, null);
-                if (state.getColor() != State.Color.RED) {
+                State nextState = state.getState(symbol, null);
+                if (nextState.getColor() != State.Color.RED) {
                     chance = 0;
                     break;
                 }
-                chance *= state.getTransitionProbability(symbol);
+                Double transitionProbability = state.getTransitionProbability(symbol);
+                chance *= transitionProbability;
+                state = nextState;
             }
             chance = Math.max(chance, MIN_PROBABILITY);
 
@@ -107,7 +129,6 @@ public class Fingerprint {
      * @return
      */
     public double KLDivergence(List<Double> fingerprintsProbs, List<Double> statemachineProbs) {
-        //System.out.println();
         //System.out.println("==========================");
         //System.out.println("Computing KL-Divergence...");
         //System.out.println("--------------------------");
@@ -129,7 +150,7 @@ public class Fingerprint {
      * @return
      */
     public String getName() {
-        return this.name;
+        return this.name + " - Step " + this.step;
     }
 
 }

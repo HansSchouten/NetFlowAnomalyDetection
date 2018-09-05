@@ -38,7 +38,7 @@ public class KafkaStateMachines {
         env.getConfig().disableSysoutLogging();
         env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(4, 10000));
         // create a checkpoint every 5 seconds
-        env.enableCheckpointing(3600000, CheckpointingMode.EXACTLY_ONCE);
+        //env.enableCheckpointing(3600000, CheckpointingMode.EXACTLY_ONCE);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
         env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);

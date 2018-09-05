@@ -100,7 +100,7 @@ public class KafkaProducer {
         //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\348-1-HTBot.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
         //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\349-1-Adload.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
 
-        NetFlowReader reader = new NetFlowReader("input\\malware-samples\\348-1-HTBot.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
+        NetFlowReader reader = new NetFlowReader("input\\fingerprints\\malspam-pandabanker-january-16 5h\\2018-01-16-malspam-pushing-Zeus-Panda-Banker-traffic.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
 
         int counter = 0;
         while (counter >= 0) {

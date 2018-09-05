@@ -74,9 +74,15 @@ public class NetFlow implements Serializable {
         }
         */
         this.IPPair = this.srcIP + "," + this.dstIP;
-        this.IPPairProtocol = this.IPPair + "," + this.protocol.toString();
+        this.IPPairProtocol = this.IPPair + "," + this.protocol.toString();// + ",day" + this.start;
         // collect all flows in one stream for debugging
         //this.IPPairProtocol = "DEBUG";
+        /*
+        if (this.dstPort != 80) {
+            this.IPPairProtocol = "non-http";
+            this.protocol = Protocol.OTHER;
+        }
+        */
 
         // compute average packet size
         this.averagePacketSize = 0;

@@ -11,7 +11,7 @@ public class State {
     /**
      * the number of futures processed by a state at which the state is merged or becomes a red state.
      */
-    public final int SIGNIFICANCE_BOUNDARY = 50;
+    public final int SIGNIFICANCE_BOUNDARY = 10;
     /**
      * the upper bound of the Chi-distance below which the sketches are regarded as similar.
      */
@@ -100,14 +100,11 @@ public class State {
      * @param future
      */
     public void increaseFrequency(Queue<Symbol> future) {
-        // since we compare without normalization, allow at most SIGNIFICANCE_BOUNDARY patterns in the sketch
-        if (this.count < SIGNIFICANCE_BOUNDARY) {
-            String signature = futureToString(future);
-            // increase the occurrence frequency of the future by one
-            this.sketch.add(signature, 1);
-        }
+        // increase the occurrence frequency of the future by one
+        String signature = futureToString(future);
+        this.sketch.add(signature, 1);
 
-        // increase number of sequences through this state
+        // increase the number of sequences through this state
         this.count++;
 
         // increase transition count of the symbol that is the head of the queue
@@ -251,10 +248,14 @@ public class State {
      * @param redState
      */
     public void merge(State redState) {
+        redState.mergeSketch(this.getSketch());
+        redState.setCount(redState.getCount() + this.getCount());
         for (Symbol inLinkSymbol : this.inLinks.keySet()) {
             State origin = this.inLinks.get(inLinkSymbol);
             origin.setTransition(inLinkSymbol, redState);
         }
+        // merge all white child states with the childs of the red state (or add new childs)
+        mergeChilds(redState);
     }
 
     /**
@@ -269,6 +270,7 @@ public class State {
                 State remainingChild = remainingState.getState(symbol, null);
                 remainingChild.mergeSketch(child.getSketch());
                 remainingChild.setCount(child.getCount() + remainingChild.getCount());
+                remainingState.transitionCounts.put(symbol, remainingState.transitionCounts.get(symbol) + this.transitionCounts.get(symbol));
                 if (child.hasChildren()) {
                     // recursive call to merge all childs deeper in the tree than the first child
                     child.mergeChilds(remainingChild);
@@ -278,6 +280,8 @@ public class State {
                 child.setDepth(remainingState.getDepth() + 1);
                 // set transition from red state to child
                 remainingState.setTransition(symbol, child);
+                // set transition count for the remaining state towards the newly added child state
+                remainingState.transitionCounts.put(symbol, this.transitionCounts.get(symbol));
                 // replace current child inlink by an inlink from red state
                 child.addInLink(symbol, remainingState);
             }

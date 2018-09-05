@@ -38,7 +38,8 @@ public class SymbolConfig {
         Scanner sc = new Scanner(file);
         */
         // speedup
-        Scanner sc = new Scanner("packetsize\n0-46 46-147 147-382 382-\n#packets\n0-4 4-9 9-11 11-");
+        // was 46
+        Scanner sc = new Scanner("packetsize\n0-68 68-129 129-382 382-\n#packets\n0-4 4-8 8-11 11-");
 
         while (sc.hasNextLine()) {
             // read key line

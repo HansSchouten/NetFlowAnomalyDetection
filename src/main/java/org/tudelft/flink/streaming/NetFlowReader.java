@@ -18,11 +18,11 @@ public class NetFlowReader {
 
     protected String path;
 
-    protected boolean reset_on_end = false;
+    protected boolean reset_on_end = true;
 
     protected int resetCount = 0;
 
-    final int MAX_RESETS = 0;
+    final int MAX_RESETS = 15;
 
     public enum Format {
         STRATOSPHERE,
@@ -178,16 +178,33 @@ public class NetFlowReader {
         return jsonFlow.toString();
     }
 
+    public boolean switching = true;
+    public int day = 0;
     public String getNextCustomNFDump() {
         JSONObject jsonFlow = new JSONObject();
-
         String[] args = this.nextLine.split(",");
 
+        /*
+        if (this.switching == false && (args[0].contains("17:40:") || args[0].contains("17:41:"))) {
+            this.switching = true;
+        }
+        if (this.switching && (args[0].contains("10:00:") || args[0].contains("10:01:"))) {
+            this.switching = false;
+            this.day++;
+            System.out.println(day);
+        }
+        if (this.switching) {
+            return null;
+        }
+        */
+
+        // only tcp + udp
         if (!getProtocolCode(args[2]).equals("17") && !getProtocolCode(args[2]).equals("6")) {
             return null;
         }
 
-        if (!args[3].equals("192.168.1.130") && !args[5].equals("192.168.1.130")) {
+        // only from/to infected host
+        if (!args[3].equals("137.74.150.217") && !args[5].equals("137.74.150.217")) {
             return null;
         }
 
@@ -215,7 +232,7 @@ public class NetFlowReader {
             jsonFlowData.put(createArg(8, args[3]));
             jsonFlowData.put(createArg(11, dstPort));    // issue in Dport export
             jsonFlowData.put(createArg(12, args[5]));
-            jsonFlowData.put(createArg(21, "0"));
+            jsonFlowData.put(createArg(21, Integer.toString(this.day)));
             jsonFlowData.put(createArg(22, "0"));
             jsonFlowDataInner.put(jsonFlowData);
 
@@ -227,9 +244,9 @@ public class NetFlowReader {
             jsonFlowData.put(createArg(8, args[5]));
             jsonFlowData.put(createArg(11, srcPort));
             jsonFlowData.put(createArg(12, args[3]));
-            jsonFlowData.put(createArg(21, "0"));
+            jsonFlowData.put(createArg(21, Integer.toString(this.day)));
             jsonFlowData.put(createArg(22, "0"));
-            jsonFlowDataInner.put(jsonFlowData);
+            //jsonFlowDataInner.put(jsonFlowData);
 
             jsonFlow.put("DataSets", jsonFlowDataInner);
         } catch (Exception ex) {

@@ -1,16 +1,18 @@
 package org.tudelft.flink.streaming.statemachines;
 
-import org.apache.hadoop.yarn.state.StateMachine;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FingerprintMatcher {
 
-    protected List<Fingerprint> fingerprints;
+    protected Map<String, List<Fingerprint>> fingerprints;
+    protected Map<String, Integer> fingerprintSteps;
 
     public void loadFingerprints() {
-        this.fingerprints = new ArrayList<>();
+        this.fingerprints = new HashMap<>();
+        this.fingerprintSteps = new HashMap<>();
 
         // on binetflow
         //loadFingerprint("output\\fingerprints\\sample1-131\\fingerprint\\dns-traces.txt", "Bubble Dock - DNS");
@@ -51,12 +53,47 @@ public class FingerprintMatcher {
         //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-188.0.236.107-TCP-161930.txt", "HTbot - Type IV - 188.0.236.107 - Step 2");
         //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-188.0.236.107-TCP-161931.txt", "HTbot - Type IV - 188.0.236.107 - Step 3");
 
-        loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.74-TCP-161929.txt", "HTbot - Type I - 195.113.232.74 HTTP A - Step 1");
+            //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.74-TCP-161929.txt", "HTbot - Type I - 195.113.232.74 HTTP A - Step 1");
         //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.74-TCP-161931.txt", "HTbot - Type V.1 - 195.113.232.74 A - Step 2");
-        loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.80-TCP-161927.txt", "HTbot - Type I - 195.113.232.80 HTTP A - Step 1");
+            //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.80-TCP-161927.txt", "HTbot - Type I - 195.113.232.80 HTTP A - Step 1");
         //loadFingerprint("input\\fingerprints\\htbot-19days\\traces-192.168.1.130-195.113.232.80-TCP-161931.txt", "HTbot - Type V.2 - 195.113.232.80 A - Step 2");
 
-        System.out.println(this.fingerprints.size() + " fingerprint(s) loaded");
+
+        /*
+        loadFingerprint("input\\fingerprints\\htbot-19days\\195.113.232.74\\traces-192.168.1.130-195.113.232.74-TCP-day2-9-152030.297.txt", "HTbot - Type I - 195.113.232.74 - Step 1");
+        loadFingerprint("input\\fingerprints\\htbot-19days\\195.113.232.74\\traces-192.168.1.130-195.113.232.74-TCP-day2-14-152032.023.txt", "HTbot - Type I - 195.113.232.74 - Step 2");
+        loadFingerprint("input\\fingerprints\\htbot-19days\\195.113.232.74\\traces-192.168.1.130-195.113.232.74-TCP-day2-19-152032.712.txt", "HTbot - Type I - 195.113.232.74 - Step 3");
+
+        loadFingerprint("input\\fingerprints\\htbot-19days\\195.113.232.80\\traces-192.168.1.130-195.113.232.80-TCP-day2-10-152032.522.txt", "HTbot - Type I - 195.113.232.80 - Step 1");
+        loadFingerprint("input\\fingerprints\\htbot-19days\\195.113.232.80\\traces-192.168.1.130-195.113.232.80-TCP-day2-15-152033.096.txt", "HTbot - Type I - 195.113.232.80 - Step 2");
+        loadFingerprint("input\\fingerprints\\htbot-19days\\195.113.232.80\\traces-192.168.1.130-195.113.232.80-TCP-day2-21-152033.643.txt", "HTbot - Type I - 195.113.232.80 - Step 3");
+        */
+
+        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 5h\\traces-10.1.16.101-137.74.150.217-TCP-5-120056.218.txt", "Malspam PandaZeus (January) 5h");
+        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 5h\\traces-10.1.16.101-137.74.150.217-TCP-9-120056.633.txt", "Malspam PandaZeus (January) 5h");
+        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 5h\\traces-10.1.16.101-137.74.150.217-TCP-10-120056.733.txt", "Malspam PandaZeus (January) 5h");
+
+        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-6-102758.375.txt", "Trickbot (Jan) 1d - C&C 1");
+        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-7-102758.536.txt", "Trickbot (Jan) 1d - C&C 1");
+        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-8-102758.696.txt", "Trickbot (Jan) 1d - C&C 1");
+        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-9-102800.722.txt", "Trickbot (Jan) 1d - C&C 1");
+
+        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 7h\\traces-10.6.14.101-109.86.227.152-TCP-9-112633.837.txt", "Trickbot (June) 7h - Step 1");
+        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 7h\\traces-10.6.14.101-109.86.227.152-TCP-10-112633.950.txt", "Trickbot (June) 7h - Step 2");
+        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 7h\\traces-10.6.14.101-109.86.227.152-TCP-12-112634.134.txt", "Trickbot (June) 7h - Step 3");
+
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-january-9 5h\\traces-10.1.9.103-185.125.206.235-TCP-4-115115.281.txt", "Emotet PandaZeus (January) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-january-9 5h\\traces-10.1.9.103-185.125.206.235-TCP-5-115115.436.txt", "Emotet PandaZeus (January) 5h");
+
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\traces-10.6.22.102-91.243.81.13-TCP-2-121307.696.txt", "Emotet PandaZeus (June) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\traces-10.6.22.102-91.243.81.13-TCP-3-121307.912.txt", "Emotet PandaZeus (June) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\traces-10.6.22.102-91.243.81.13-TCP-4-121308.035.txt", "Emotet PandaZeus (June) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\traces-10.6.22.102-91.243.81.13-TCP-5-121308.160.txt", "Emotet PandaZeus (June) 5h");
+
+        loadFingerprint("input\\fingerprints\\zeus-august-2h\\traces-10.8.23.101-185.231.153.228-TCP-6-104622.448.txt", "Zeus (Augustus) 2h");
+        loadFingerprint("input\\fingerprints\\zeus-august-2h\\traces-10.8.23.101-185.231.153.228-TCP-8-104622.633.txt", "Zeus (Augustus) 2h");
+
+        System.out.println(this.fingerprints.size() + " fingerprint(s) pre-loaded");
     }
 
     /**
@@ -66,12 +103,20 @@ public class FingerprintMatcher {
      * @param name
      */
     protected void loadFingerprint(String path, String name) {
-        try {
-            Fingerprint fingerprint = new Fingerprint();
-            fingerprint.loadFingerprint(path, name);
-            this.fingerprints.add(fingerprint);
-        } catch (Exception  ex) {
-            System.out.println("Error while loading fingerprint: " + ex.getMessage());
+        int step = 1;
+        if (this.fingerprints.containsKey(name)) {
+            step = this.fingerprints.get(name).size() + 1;
+        }
+
+        Fingerprint fingerprint = new Fingerprint(path, name, step);
+
+        if (this.fingerprints.containsKey(name)) {
+            this.fingerprints.get(name).add(fingerprint);
+        } else {
+            List list = new ArrayList<Fingerprint>();
+            list.add(fingerprint);
+            this.fingerprints.put(name, list);
+            this.fingerprintSteps.put(name, 1);
         }
     }
 
@@ -81,13 +126,18 @@ public class FingerprintMatcher {
      * @param statemachine
      */
     public void match(StateMachineNetFlow statemachine) {
-        for (Fingerprint fingerprint : this.fingerprints) {
-            try {
+        for (String name : this.fingerprints.keySet()) {
+            int maxStep = Math.min(this.fingerprintSteps.get(name), this.fingerprints.get(name).size());
+
+            for (int step = 1; step <= maxStep; step++) {
+                Fingerprint fingerprint = this.fingerprints.get(name).get(step - 1);
                 boolean match = fingerprint.match(statemachine.root, statemachine.stateMachineID);
                 if (match) {
-                    statemachine.visualiseMalwareModel();
+                    statemachine.visualiseMatchingMalwareModel();
+                    if (step == maxStep) {
+                        this.fingerprintSteps.put(name, step + 1);
+                    }
                 }
-            } catch (Exception ex) {
             }
         }
     }
