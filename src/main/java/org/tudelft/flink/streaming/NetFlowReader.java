@@ -22,7 +22,7 @@ public class NetFlowReader {
 
     protected int resetCount = 0;
 
-    final int MAX_RESETS = 15;
+    final int MAX_RESETS = 10;
 
     public enum Format {
         STRATOSPHERE,
@@ -202,11 +202,12 @@ public class NetFlowReader {
         if (!getProtocolCode(args[2]).equals("17") && !getProtocolCode(args[2]).equals("6")) {
             return null;
         }
-
+        /*
         // only from/to infected host
-        if (!args[3].equals("137.74.150.217") && !args[5].equals("137.74.150.217")) {
+        if (!args[3].equals("192.168.1.123") && !args[5].equals("192.168.1.123")) {
             return null;
         }
+        */
 
         try {
             JSONArray jsonFlowDataInner = new JSONArray();

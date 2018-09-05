@@ -1,12 +1,14 @@
 package org.tudelft.flink.streaming.statemachines;
 
+import javafx.util.Pair;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.*;
 
 public class Fingerprint {
 
-    protected Map<List<Symbol>, Double> traces;
+    protected List<List<Symbol>> traces;
     protected List<Double> probabilities;
     protected String path;
     protected String name;
@@ -37,7 +39,7 @@ public class Fingerprint {
      */
     public void loadFingerprint() throws Exception {
         this.probabilities = new ArrayList<>();
-        this.traces = new HashMap<>();
+        this.traces = new ArrayList<>();
         this.isLoaded = true;
 
         Scanner reader = new Scanner(new BufferedReader(new FileReader(path)));
@@ -54,7 +56,7 @@ public class Fingerprint {
 
             double probability = Double.parseDouble(parts[length + 1]);
             probability = Math.max(probability, MIN_PROBABILITY);
-            this.traces.put(sequence, probability);
+            this.traces.add(sequence);
             this.probabilities.add(probability);
         }
     }
@@ -75,7 +77,6 @@ public class Fingerprint {
             }
         }
 
-        System.out.println(this.getName() + ": " + this.previousDistance);
         List<Double> otherProbabilities = getProbabilities(root);
         this.previousDistance = KLDivergence(this.probabilities, otherProbabilities);
         boolean match = this.previousDistance <= MATCH_THRESHOLD;
@@ -95,7 +96,7 @@ public class Fingerprint {
         List<Double> probabilities = new ArrayList<>();
 
         // loop through all traces of this fingerprint
-        for (List<Symbol> sequence : this.traces.keySet()) {
+        for (List<Symbol> sequence : this.traces) {
             double chance = 1;
 
             State state = root;

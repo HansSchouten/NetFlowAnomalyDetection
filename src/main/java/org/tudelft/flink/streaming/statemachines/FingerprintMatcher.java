@@ -69,29 +69,30 @@ public class FingerprintMatcher {
         loadFingerprint("input\\fingerprints\\htbot-19days\\195.113.232.80\\traces-192.168.1.130-195.113.232.80-TCP-day2-21-152033.643.txt", "HTbot - Type I - 195.113.232.80 - Step 3");
         */
 
-        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 5h\\traces-10.1.16.101-137.74.150.217-TCP-5-120056.218.txt", "Malspam PandaZeus (January) 5h");
-        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 5h\\traces-10.1.16.101-137.74.150.217-TCP-9-120056.633.txt", "Malspam PandaZeus (January) 5h");
-        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 5h\\traces-10.1.16.101-137.74.150.217-TCP-10-120056.733.txt", "Malspam PandaZeus (January) 5h");
+        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-6-205430.122.txt", "Trickbot (Jan) 1d");
+        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-7-205430.254.txt", "Trickbot (Jan) 1d");
+        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-8-205430.389.txt", "Trickbot (Jan) 1d");
+        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-9-205432.696.txt", "Trickbot (Jan) 1d");
 
-        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-6-102758.375.txt", "Trickbot (Jan) 1d - C&C 1");
-        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-7-102758.536.txt", "Trickbot (Jan) 1d - C&C 1");
-        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-8-102758.696.txt", "Trickbot (Jan) 1d - C&C 1");
-        loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-9-102800.722.txt", "Trickbot (Jan) 1d - C&C 1");
+        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 10h\\c&c1\\traces-10.6.14.101-109.86.227.152-TCP-9-205817.807.txt", "Trickbot (June) 10h");
+        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 10h\\c&c1\\traces-10.6.14.101-109.86.227.152-TCP-10-205817.918.txt", "Trickbot (June) 10h");
+        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 10h\\c&c1\\traces-10.6.14.101-109.86.227.152-TCP-12-205818.163.txt", "Trickbot (June) 10h");
 
-        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 7h\\traces-10.6.14.101-109.86.227.152-TCP-9-112633.837.txt", "Trickbot (June) 7h - Step 1");
-        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 7h\\traces-10.6.14.101-109.86.227.152-TCP-10-112633.950.txt", "Trickbot (June) 7h - Step 2");
-        loadFingerprint("input\\fingerprints\\emotet-trickbot-june 7h\\traces-10.6.14.101-109.86.227.152-TCP-12-112634.134.txt", "Trickbot (June) 7h - Step 3");
+        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 2h\\c&c1\\traces-10.1.16.101-137.74.150.217-TCP-5-210221.710.txt", "Malspam PandaZeus (January) 2h");
+        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 2h\\c&c1\\traces-10.1.16.101-137.74.150.217-TCP-9-210222.157.txt", "Malspam PandaZeus (January) 2h");
+        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 2h\\c&c1\\traces-10.1.16.101-137.74.150.217-TCP-9-210222.157.txt", "Malspam PandaZeus (January) 2h");
+        loadFingerprint("input\\fingerprints\\malspam-pandabanker-january-16 2h\\c&c1\\traces-10.1.16.101-137.74.150.217-TCP-13-210319.632.txt", "Malspam PandaZeus (January) 2h");
 
-        loadFingerprint("input\\fingerprints\\emotet-pandabanker-january-9 5h\\traces-10.1.9.103-185.125.206.235-TCP-4-115115.281.txt", "Emotet PandaZeus (January) 5h");
-        loadFingerprint("input\\fingerprints\\emotet-pandabanker-january-9 5h\\traces-10.1.9.103-185.125.206.235-TCP-5-115115.436.txt", "Emotet PandaZeus (January) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-january-9 5h\\c&c1\\traces-10.1.9.103-185.125.206.235-TCP-2-211014.970.txt", "Emotet PandaZeus (January) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-january-9 5h\\c&c1\\traces-10.1.9.103-185.125.206.235-TCP-3-211015.059.txt", "Emotet PandaZeus (January) 5h");
 
-        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\traces-10.6.22.102-91.243.81.13-TCP-2-121307.696.txt", "Emotet PandaZeus (June) 5h");
-        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\traces-10.6.22.102-91.243.81.13-TCP-3-121307.912.txt", "Emotet PandaZeus (June) 5h");
-        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\traces-10.6.22.102-91.243.81.13-TCP-4-121308.035.txt", "Emotet PandaZeus (June) 5h");
-        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\traces-10.6.22.102-91.243.81.13-TCP-5-121308.160.txt", "Emotet PandaZeus (June) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\c&c1\\traces-10.6.22.102-91.243.81.13-TCP-2-211552.521.txt", "Emotet PandaZeus (June) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\c&c1\\traces-10.6.22.102-91.243.81.13-TCP-3-211607.963.txt", "Emotet PandaZeus (June) 5h");
+        loadFingerprint("input\\fingerprints\\emotet-pandabanker-june 5h\\c&c1\\traces-10.6.22.102-91.243.81.13-TCP-4-211608.143.txt", "Emotet PandaZeus (June) 5h");
 
-        loadFingerprint("input\\fingerprints\\zeus-august-2h\\traces-10.8.23.101-185.231.153.228-TCP-6-104622.448.txt", "Zeus (Augustus) 2h");
-        loadFingerprint("input\\fingerprints\\zeus-august-2h\\traces-10.8.23.101-185.231.153.228-TCP-8-104622.633.txt", "Zeus (Augustus) 2h");
+        loadFingerprint("input\\fingerprints\\zeus-august-2h\\c&c1\\traces-10.8.23.101-185.231.153.228-TCP-6-212232.361.txt", "Zeus (Augustus) 2h");
+        loadFingerprint("input\\fingerprints\\zeus-august-2h\\c&c1\\traces-10.8.23.101-185.231.153.228-TCP-8-212232.557.txt", "Zeus (Augustus) 2h");
+        loadFingerprint("input\\fingerprints\\zeus-august-2h\\c&c1\\traces-10.8.23.101-185.231.153.228-TCP-9-212232.678.txt", "Zeus (Augustus) 2h");
 
         System.out.println(this.fingerprints.size() + " fingerprint(s) pre-loaded");
     }

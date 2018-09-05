@@ -460,13 +460,21 @@ public class State {
         // re-initialize, since transitions could have been added
         this.randomTransitions = new RandomWeightedCollection();
         int count = 0;
+
+        for (Symbol symbol : this.transitionCounts.keySet()) {
+            State next = getState(symbol, null);
+            if (next.getColor().equals(Color.RED)) {
+                count++;
+            }
+        }
+
         for (Symbol symbol : this.transitionCounts.keySet()) {
             State next = getState(symbol, null);
             if (next.getColor().equals(Color.BLUE)) {
                 continue;
             }
             count++;
-            double chance = 1.0 / (double) this.transitionCounts.keySet().size();
+            double chance = 1.0 / (double) count;
             this.randomTransitions.add(chance, symbol);
         }
 
@@ -478,6 +486,22 @@ public class State {
     }
 
     /**
+     * The total number of transitions performed to all red states.
+     *
+     * @return
+     */
+    public int redStateTransitionCount() {
+        int count = 0;
+        for (Symbol symbol : this.transitionCounts.keySet()) {
+            State next = getState(symbol, null);
+            if (next.getColor().equals(Color.RED)) {
+                count += this.transitionCounts.get(symbol);
+            }
+        }
+        return count;
+    }
+
+    /**
      * Return the occurrence probability of the given symbol.
      *
      * @param symbol
@@ -485,7 +509,7 @@ public class State {
      */
     public Double getTransitionProbability(Symbol symbol) {
         if (this.transitionCounts.containsKey(symbol)) {
-            return this.transitionCounts.get(symbol) / (double) this.count;
+            return this.transitionCounts.get(symbol) / (double) redStateTransitionCount();
         } else {
             return null;
         }
