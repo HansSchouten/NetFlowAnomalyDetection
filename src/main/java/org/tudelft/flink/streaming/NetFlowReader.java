@@ -18,11 +18,11 @@ public class NetFlowReader {
 
     protected String path;
 
-    protected boolean reset_on_end = true;
+    protected boolean reset_on_end = false;
 
     protected int resetCount = 0;
 
-    final int MAX_RESETS = 10;
+    final int MAX_RESETS = 0;
 
     public enum Format {
         STRATOSPHERE,
@@ -204,7 +204,7 @@ public class NetFlowReader {
         }
         /*
         // only from/to infected host
-        if (!args[3].equals("192.168.1.123") && !args[5].equals("192.168.1.123")) {
+        if (!args[3].equals("52.114.74.11") && !args[5].equals("52.114.74.11")) {
             return null;
         }
         */

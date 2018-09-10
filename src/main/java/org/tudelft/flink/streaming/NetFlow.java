@@ -78,7 +78,7 @@ public class NetFlow implements Serializable {
         // collect all flows in one stream for debugging
         //this.IPPairProtocol = "DEBUG";
         /*
-        if (this.dstPort != 80) {
+        if (this.dstPort != 443 && this.srcPort != 443) {
             this.IPPairProtocol = "non-http";
             this.protocol = Protocol.OTHER;
         }

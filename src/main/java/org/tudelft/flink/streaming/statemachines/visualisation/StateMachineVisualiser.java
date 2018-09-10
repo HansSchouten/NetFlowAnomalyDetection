@@ -44,7 +44,7 @@ public class StateMachineVisualiser {
      */
     protected void writeToFile(String path) {
         // don't write empty graphs
-        if (this.graph.getNodeCount() <= 1) {
+        if (this.graph.getNodeCount() < 1) {
             return;
         }
         // create image file sink

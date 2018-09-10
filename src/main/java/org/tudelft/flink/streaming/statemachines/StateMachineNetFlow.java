@@ -87,9 +87,9 @@ public class StateMachineNetFlow extends NetFlow {
      */
     public char current_char = 'A';
     /**
-     * The number of red states at which the last visualisation is made.
+     * Whether the State Machine has changed since the last visualisation.
      */
-    public int previousRedStateCount = 1;
+    public boolean model_changed = false;
     /**
      * Object for matching this State Machine with known fingerprints.
      */
@@ -137,11 +137,44 @@ public class StateMachineNetFlow extends NetFlow {
      *
      * @param nextNetFlow
      */
+    public int correctCount = 0;
     public void consumeNetFlow(StateMachineNetFlow nextNetFlow) {
-        if (nextNetFlow.protocol != Protocol.TCP || this.completed) { // || this.dstPort != "443") {
+        /*
+        if (nextNetFlow.protocol == Protocol.OTHER || this.completed) {
             this.completed = true;
             return;
         }
+        */
+        if (nextNetFlow.srcIP.equals("75.59.67.186") || nextNetFlow.dstIP.equals("75.59.67.186")) {
+            this.correctCount++;
+            if (this.correctCount > 49) {
+                return;
+            }
+
+            System.out.println(this.correctCount + " - " + nextNetFlow.toString());
+        }
+
+        if (true) {
+            return;
+        }
+
+
+        /*
+        if (nextNetFlow.byteCount > 487500 && nextNetFlow.byteCount < 3712500) {
+            if (nextNetFlow.packetCount > 4500 && nextNetFlow.packetCount < 21000) {
+                correctCount++;
+                System.out.println(nextNetFlow.toString() + " - " + this.correctCount);
+                return;
+            }
+        }
+
+        this.completed = true;
+
+        if (true) {
+            return;
+        }
+        */
+
 
         // start with processing this object, before processing all rolling NetFlows
         if (this.flow_counter == 0) {
@@ -161,7 +194,7 @@ public class StateMachineNetFlow extends NetFlow {
         this.current_char = 'A';
         this.flow_counter = 0;
         this.skip_counter = 0;
-        this.previousRedStateCount = 1;
+        this.model_changed = false;
 
         this.future = new LinkedList<>();
         this.root = new State(State.Color.RED, 0);
@@ -182,14 +215,14 @@ public class StateMachineNetFlow extends NetFlow {
      * Perform an action corresponding to the current mode, if the model has changed.
      */
     public void performModeSpecificAction() {
-        if (this.redStates.size() >= 1 && this.redStates.size() > previousRedStateCount) {
-            this.previousRedStateCount++;
+        if (this.redStates.size() >= 1 && this.model_changed) {
+            this.model_changed = false;
 
             if (this.mode == Mode.LEARN_ATTACK_MODELS) {
                 visualiseMalwareModel();
             } else if (this.mode == Mode.REALTIME_DETECTION) {
                 matchMalware();
-                if (this.redStates.size() >= 20) {
+                if (this.redStates.size() >= 15) {
                     resetStateMachine();
                     this.completed = true;
                 }
@@ -325,6 +358,7 @@ public class StateMachineNetFlow extends NetFlow {
                     // continue evaluation in the red state the instance has merged with
                     instance = mostSimilarState;
                 }
+                this.model_changed = true;
 
                 visualiseStep();
             }

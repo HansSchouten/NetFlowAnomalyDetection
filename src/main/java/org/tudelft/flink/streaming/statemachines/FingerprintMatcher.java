@@ -94,6 +94,8 @@ public class FingerprintMatcher {
         loadFingerprint("input\\fingerprints\\zeus-august-2h\\c&c1\\traces-10.8.23.101-185.231.153.228-TCP-8-212232.557.txt", "Zeus (Augustus) 2h");
         loadFingerprint("input\\fingerprints\\zeus-august-2h\\c&c1\\traces-10.8.23.101-185.231.153.228-TCP-9-212232.678.txt", "Zeus (Augustus) 2h");
 
+        loadFingerprint("input\\fingerprints\\vertical-scan\\traces-192.168.2.2-192.168.2.102-TCP-0-233828.963.txt", "Vertical Port Scan");
+
         System.out.println(this.fingerprints.size() + " fingerprint(s) pre-loaded");
     }
 
@@ -134,7 +136,7 @@ public class FingerprintMatcher {
                 Fingerprint fingerprint = this.fingerprints.get(name).get(step - 1);
                 boolean match = fingerprint.match(statemachine.root, statemachine.stateMachineID);
                 if (match) {
-                    statemachine.visualiseMatchingMalwareModel();
+                    //statemachine.visualiseMatchingMalwareModel();
                     if (step == maxStep) {
                         this.fingerprintSteps.put(name, step + 1);
                     }

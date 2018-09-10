@@ -63,7 +63,7 @@ public class KafkaStateMachines {
                     }
                 })
                 .keyBy("IPPairProtocol")
-                //.timeWindow(Time.seconds(120))
+                //.timeWindow(Time.seconds(20))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
                     public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
