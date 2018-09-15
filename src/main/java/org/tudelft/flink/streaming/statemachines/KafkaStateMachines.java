@@ -63,7 +63,7 @@ public class KafkaStateMachines {
                     }
                 })
                 .keyBy("IPPairProtocol")
-                //.timeWindow(Time.seconds(20))
+                .timeWindow(Time.seconds(600))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
                     public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
@@ -73,7 +73,7 @@ public class KafkaStateMachines {
                 });
 
         // output the results (with a single thread, rather than in parallel)
-        //hostSequences.print().setParallelism(1);
+        hostSequences.print().setParallelism(1);
 
         // trigger execution
         env.execute("Kafka NetFlow StateMachines");

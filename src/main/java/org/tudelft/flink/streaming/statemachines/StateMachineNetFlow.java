@@ -145,6 +145,8 @@ public class StateMachineNetFlow extends NetFlow {
             return;
         }
         */
+
+        /*
         if (nextNetFlow.srcIP.equals("75.59.67.186") || nextNetFlow.dstIP.equals("75.59.67.186")) {
             this.correctCount++;
             if (this.correctCount > 49) {
@@ -157,6 +159,7 @@ public class StateMachineNetFlow extends NetFlow {
         if (true) {
             return;
         }
+        */
 
 
         /*
@@ -184,7 +187,7 @@ public class StateMachineNetFlow extends NetFlow {
         }
 
         processFlow(nextNetFlow);
-        performModeSpecificAction();
+        //performModeSpecificAction();
     }
 
     /**
@@ -278,7 +281,11 @@ public class StateMachineNetFlow extends NetFlow {
     public void processFlow(StateMachineNetFlow nextNetFlow) {
         // increase the counter, keeping track of how many flows are reduced into this object
         this.flow_counter++;
-        //addForPercentile(nextNetFlow);
+        addForPercentile(nextNetFlow);
+
+        if (true) {
+            return;
+        }
 
         // get the symbol of the incoming NetFlow
         Symbol incomingSymbol = getSymbol(nextNetFlow);
@@ -439,8 +446,8 @@ public class StateMachineNetFlow extends NetFlow {
             this.patternFileOutput.writeToFile(this.stateMachineID);
         }
 
-        //printPercentiles();
         */
+        printPercentiles();
 
         return this.srcIP
                 + "," + this.srcPort
@@ -534,9 +541,17 @@ public class StateMachineNetFlow extends NetFlow {
     public List<Double> packetSizes;
     public List<Long> packetCounts;
     public void addForPercentile(StateMachineNetFlow other) {
+        if (this.flow_counter < 10) {
+            System.out.println("First flows received");
+        }
+        if (this.flow_counter % 1000 != 0) {
+            return;
+        }
+        /*
         if (! other.protocol.equals(Protocol.TCP)) {
             return;
         }
+        */
 
         if (this.packetCounts == null) {
             this.packetCounts = new ArrayList<>();
@@ -549,6 +564,38 @@ public class StateMachineNetFlow extends NetFlow {
 
     public void printPercentiles() {
         System.out.println();
+
+        try {
+            String path = "output\\packet_count.txt";
+            BufferedWriter writer = new BufferedWriter(new FileWriter(path));
+            for (int i = 0; i < this.packetCounts.size(); i++) {
+                writer.write(this.packetCounts.get(i) + "\n");
+            }
+            writer.close();
+        }
+        catch(IOException ex) {
+            System.out.println("Error writing file 1:\n" + ex.getMessage());
+        }
+
+        try {
+            String path = "output\\packet_size.txt";
+            BufferedWriter writer = new BufferedWriter(new FileWriter(path));
+            for (int i = 0; i < this.packetSizes.size(); i++) {
+                writer.write(this.packetSizes.get(i) + "\n");
+            }
+            writer.close();
+        }
+        catch(IOException ex) {
+            System.out.println("Error writing file 2:\n" + ex.getMessage());
+        }
+
+        if (true) {
+            System.out.println("Done writing!");
+            return;
+        }
+
+
+
 
 
         Collections.sort(this.packetSizes);

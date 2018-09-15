@@ -76,7 +76,7 @@ public class NetFlow implements Serializable {
         this.IPPair = this.srcIP + "," + this.dstIP;
         this.IPPairProtocol = this.IPPair + "," + this.protocol.toString();// + ",day" + this.start;
         // collect all flows in one stream for debugging
-        //this.IPPairProtocol = "DEBUG";
+        this.IPPairProtocol = "DEBUG";
         /*
         if (this.dstPort != 443 && this.srcPort != 443) {
             this.IPPairProtocol = "non-http";
