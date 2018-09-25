@@ -95,12 +95,16 @@ public class StateMachineVisualiser {
      * @param label         the symbol or other label that will be shown on the edge
      */
     protected void addTransition(String from, String to, String label) {
-        // generate unique id for this edge
-        String edgeId = from + "-" + to + "-" + label;
-        // add edge
-        this.graph.addEdge(edgeId, from, to, true);
-        // add the label to the edge
-        this.graph.getEdge(edgeId).setAttribute("ui.label", label);
+        try {
+            // generate unique id for this edge
+            String edgeId = from + "-" + to + "-" + label;
+            // add edge
+            this.graph.addEdge(edgeId, from, to, true);
+            // add the label to the edge
+            this.graph.getEdge(edgeId).setAttribute("ui.label", label);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
 }

@@ -20,11 +20,20 @@ public class NetFlow implements Serializable {
     public String dstIP;
     public Integer srcPort;
     public Integer dstPort;
-    public String IPPair;
-    public String IPPairProtocol;
     public String symbol;
     public long start;
     public long end;
+    public boolean lastFlow = false; //indicates that the last flow of a test sequence has passed
+    public String combination; //used to pass which parameters to use (for evaluation purposes)
+    /**
+     * Parameters to group on.
+     */
+    public String IPPair;
+    public String IPPairProtocol;
+    public String datasetLabel; // used for testing performance
+    public String group;
+    public String all = "";
+
 
     public enum Protocol {
         UDP,
@@ -76,11 +85,16 @@ public class NetFlow implements Serializable {
         this.IPPair = this.srcIP + "," + this.dstIP;
         this.IPPairProtocol = this.IPPair + "," + this.protocol.toString();// + ",day" + this.start;
         // collect all flows in one stream for debugging
-        this.IPPairProtocol = "DEBUG";
+        //this.IPPairProtocol = "DEBUG";
         /*
         if (this.dstPort != 443 && this.srcPort != 443) {
             this.IPPairProtocol = "non-http";
             this.protocol = Protocol.OTHER;
+        }
+        */
+        /*
+        if (this.combination != null) {
+            this.group = this.datasetLabel + "-" + this.combination;
         }
         */
 
@@ -103,9 +117,6 @@ public class NetFlow implements Serializable {
      */
     protected void storeElement(Integer id, String value) {
         switch (id) {
-            case 0:
-                this.symbol = value;
-                break;
             case 1:
                 this.byteCount = Long.decode(value);
                 break;
@@ -142,6 +153,22 @@ public class NetFlow implements Serializable {
                 break;
             case 22:
                 this.end = Long.valueOf(value);
+                break;
+
+            // test/design purposes
+            case -3:
+                this.combination = value;
+                break;
+            case -2:
+                if (value.equals("1")) {
+                    this.lastFlow = true;
+                }
+                break;
+            case -1:
+                this.datasetLabel = value;
+                break;
+            case 0:
+                this.symbol = value;
                 break;
         }
     }

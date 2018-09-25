@@ -5,6 +5,8 @@ import org.tudelft.flink.streaming.statemachines.StateMachineNetFlow;
 import org.tudelft.flink.streaming.statemachines.Symbol;
 import org.tudelft.flink.streaming.statemachines.helpers.PatternTester;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 public class KafkaProducer {
@@ -21,9 +23,93 @@ public class KafkaProducer {
         properties.setProperty("value.serializer","org.apache.kafka.common.serialization.StringSerializer");
         org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(properties);
 
+        producePerformanceTestData(producer);
         //produceDebug(producer);
         //producePatterns(producer);
-        replayStratosphere(producer);
+        //replayStratosphere(producer);
+    }
+
+    protected static void producePerformanceTestData(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
+        /*
+        List<PatternTester> testers = new ArrayList<>();
+        for (int i=3; i<4; i++) {
+            String path = "input\\pautomac\\validation\\set" + (i+1) + "\\0-1pautomac.train";
+            testers.add(new PatternTester(path));
+        }
+
+        int max = 1000000;
+        for (int count = 0; count < max; count++) {
+            for (int i=0; i<1; i++) {
+                PatternTester tester = testers.get(i);
+                Symbol next = tester.getNext();
+                String last = (count > 0.95 * max) ? "1" : "0";
+                String data = "{\"AgentID\":\"127.0.0.1\",\"DataSets\":[[{\"I\":0,\"V\":\"" + next.toString() + "\"},{\"I\":-1,\"V\":\"" + (i+1) + "\"},{\"I\":-2,\"V\":\"" + last + "\"},{\"I\":8,\"V\":\"10.0.0.2\"},{\"I\":12,\"V\":\"10.0.0.3\"},{\"I\":15,\"V\":\"0.0.0.0\"},{\"I\":10,\"V\":3},{\"I\":14,\"V\":5},{\"I\":2,\"V\":\"0x000000f5\"},{\"I\":1,\"V\":\"0x000000b6\"},{\"I\":7,\"V\":4242},{\"I\":11,\"V\":80},{\"I\":6,\"V\":\"0x00\"},{\"I\":4,\"V\":17},{\"I\":5,\"V\":1},{\"I\":17,\"V\":\"0x0003\"},{\"I\":16,\"V\":\"0x0002\"},{\"I\":9,\"V\":32},{\"I\":13,\"V\":31},{\"I\":21,\"V\":40536924},{\"I\":22,\"V\":40476924}]]}";
+                producer.send(new ProducerRecord<String, String>(topic, data));
+            }
+            if (count % 100 == 0) {
+                Thread.sleep(1);
+            }
+        }
+        */
+
+
+        int dataset = 6;
+        String path = "input\\pautomac\\validation\\set" + dataset + "\\0-1pautomac.train";
+        PatternTester tester = new PatternTester(path);
+        int max = 1000000;
+        for (int count = 0; count < max; count++) {
+            Symbol next = tester.getNext();
+            String last = (count > 0.95 * max) ? "1" : "0";
+            String data = "{\"AgentID\":\"127.0.0.1\",\"DataSets\":[[{\"I\":0,\"V\":\"" + next.toString() + "\"},{\"I\":-1,\"V\":\"" + dataset + "\"},{\"I\":-2,\"V\":\"" + last + "\"},{\"I\":8,\"V\":\"10.0.0.2\"},{\"I\":12,\"V\":\"10.0.0.3\"},{\"I\":15,\"V\":\"0.0.0.0\"},{\"I\":10,\"V\":3},{\"I\":14,\"V\":5},{\"I\":2,\"V\":\"0x000000f5\"},{\"I\":1,\"V\":\"0x000000b6\"},{\"I\":7,\"V\":4242},{\"I\":11,\"V\":80},{\"I\":6,\"V\":\"0x00\"},{\"I\":4,\"V\":17},{\"I\":5,\"V\":1},{\"I\":17,\"V\":\"0x0003\"},{\"I\":16,\"V\":\"0x0002\"},{\"I\":9,\"V\":32},{\"I\":13,\"V\":31},{\"I\":21,\"V\":40536924},{\"I\":22,\"V\":40476924}]]}";
+            producer.send(new ProducerRecord<String, String>(topic, data));
+            if (count % 100 == 0) {
+                Thread.sleep(1);
+            }
+        }
+
+
+        /*
+        int dataset = 2;
+        int max = 500000;
+        List<String> c = new ArrayList<>();
+
+        List<String> c1 = new ArrayList<>();
+        c1.add("1000");
+        c1.add("750");
+        c1.add("500");
+        c1.add("250");
+        c1.add("100");
+        c1.add("50");
+        c1.add("25");
+        c1.add("10");
+
+        List<String> c2 = new ArrayList<>();
+        c2.add("50");
+        c2.add("25");
+        c2.add("10");
+        c2.add("5");
+
+        for (String c1_el : c1) {
+            for (String c2_el : c2) {
+                c.add(c1_el + "-" + c2_el);
+            }
+        }
+
+        String path = "input\\pautomac\\design\\set" + dataset + "\\0-1pautomac.train";
+        PatternTester tester = new PatternTester(path);
+        for (String combination : c) {
+            tester.reset();
+            for (int count = 0; count < max; count++) {
+                Symbol next = tester.getNext();
+                String last = (count > 0.9 * max) ? "1" : "0";
+                String data = "{\"AgentID\":\"127.0.0.1\",\"DataSets\":[[{\"I\":0,\"V\":\"" + next.toString() + "\"},{\"I\":-1,\"V\":\"" + dataset + "\"},{\"I\":-2,\"V\":\"" + last + "\"},{\"I\":-3,\"V\":\"" + combination + "\"},{\"I\":8,\"V\":\"10.0.0.2\"},{\"I\":12,\"V\":\"10.0.0.3\"},{\"I\":15,\"V\":\"0.0.0.0\"},{\"I\":10,\"V\":3},{\"I\":14,\"V\":5},{\"I\":2,\"V\":\"0x000000f5\"},{\"I\":1,\"V\":\"0x000000b6\"},{\"I\":7,\"V\":4242},{\"I\":11,\"V\":80},{\"I\":6,\"V\":\"0x00\"},{\"I\":4,\"V\":17},{\"I\":5,\"V\":1},{\"I\":17,\"V\":\"0x0003\"},{\"I\":16,\"V\":\"0x0002\"},{\"I\":9,\"V\":32},{\"I\":13,\"V\":31},{\"I\":21,\"V\":40536924},{\"I\":22,\"V\":40476924}]]}";
+                producer.send(new ProducerRecord<String, String>(topic, data));
+                if (count % 100 == 0) {
+                    Thread.sleep(1);
+                }
+            }
+        }
+        */
     }
 
     protected static void produceDebug(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {

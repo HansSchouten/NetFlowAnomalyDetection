@@ -1,7 +1,5 @@
 package org.tudelft.flink.streaming.statemachines;
 
-import javafx.util.Pair;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.*;
@@ -105,7 +103,7 @@ public class Fingerprint {
                     chance = 0;
                     break;
                 }
-                State nextState = state.getState(symbol, null);
+                State nextState = state.getState(symbol);
                 if (nextState.getColor() != State.Color.RED) {
                     chance = 0;
                     break;

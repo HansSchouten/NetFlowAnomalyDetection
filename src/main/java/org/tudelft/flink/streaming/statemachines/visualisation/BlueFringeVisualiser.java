@@ -10,6 +10,7 @@ import java.util.List;
 public class BlueFringeVisualiser extends StateMachineVisualiser {
 
     protected boolean only_red;
+    protected char current_char = 'A';
 
     public BlueFringeVisualiser() {
         this.only_red = false;
@@ -73,12 +74,17 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
             cssClass = "white";
         }
         // define the label
+
         String label = "[" + state.getCount() + "]";
+        /*
         if (state.getLabel() != null) {
             label = state.getLabel();
         }
+        */
+        label = String.valueOf(this.current_char);
         // add the node to the graph
         super.addState(id, cssClass, label);
+        this.current_char = Character.valueOf((char) (this.current_char + 1));
     }
 
     /**
@@ -88,7 +94,7 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
      */
     protected void addBlueStates(State state) {
         for (Symbol symbol : state.getTransitions()) {
-            State next = state.getState(symbol, null);
+            State next = state.getState(symbol);
             if (next.getColor() == State.Color.BLUE) {
                 this.addState(next);
 
@@ -101,7 +107,7 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
     protected void addWhiteStates(State state) {
         if (state.hasChildren()) {
             for (Symbol symbol : state.getTransitions()) {
-                State next = state.getState(symbol, null);
+                State next = state.getState(symbol);
                 this.addState(next);
                 // add transition
                 addTransition(state, symbol);
@@ -114,7 +120,7 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
 
     protected void addTransition(State origin, Symbol symbol) {
         String fromId = Integer.toString(origin.hashCode());
-        State to = origin.getState(symbol, null);
+        State to = origin.getState(symbol);
         String label = symbol.toString();
         String toId = Integer.toString(to.hashCode());
         super.addTransition(fromId, toId, label);
@@ -128,7 +134,7 @@ public class BlueFringeVisualiser extends StateMachineVisualiser {
     protected void addTransitions(State origin) {
         for (Symbol symbol : origin.getTransitions()) {
             String fromId = Integer.toString(origin.hashCode());
-            State to = origin.getState(symbol, null);
+            State to = origin.getState(symbol);
             if (to.getColor() == State.Color.BLUE && this.only_red) {
                 continue;
             }

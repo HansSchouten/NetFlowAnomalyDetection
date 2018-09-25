@@ -20,6 +20,7 @@ public class PAutomacVisualiser extends StateMachineVisualiser {
         }
         // write graph to file
         String path = "output\\state-machines\\pautomac.png";
+        this.showVisualisation();
         this.writeToFile(path);
     }
 

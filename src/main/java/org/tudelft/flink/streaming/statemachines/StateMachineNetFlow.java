@@ -3,6 +3,8 @@ package org.tudelft.flink.streaming.statemachines;
 import com.fasterxml.jackson.databind.JsonNode;
 import javafx.util.Pair;
 import org.tudelft.flink.streaming.NetFlow;
+import org.tudelft.flink.streaming.statemachines.validation.PautomacValidator;
+import org.tudelft.flink.streaming.statemachines.validation.VisualisePAutomac;
 import org.tudelft.flink.streaming.statemachines.visualisation.BlueFringeVisualiser;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
 
@@ -17,7 +19,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * Number of symbols contained in a future.
      */
-    public static int FUTURE_SIZE = 4;
+    public static int FUTURE_SIZE = 2;
     /**
      * Maximum number of instances past by one sequence of futures (prevents infinite loops).
      */
@@ -35,7 +37,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * The current execution mode.
      */
-    public Mode mode = Mode.REALTIME_DETECTION;
+    public Mode mode = Mode.PAUTOMAC_VALIDATION;
     /**
      * Show a visualisation for each step of learning the State Machine.
      */
@@ -82,10 +84,6 @@ public class StateMachineNetFlow extends NetFlow {
      * Number of skipped futures, due to encountering stop symbols.
      */
     public int skip_counter = 0;
-    /**
-     * Label of the next state that will be added.
-     */
-    public char current_char = 'A';
     /**
      * Whether the State Machine has changed since the last visualisation.
      */
@@ -137,72 +135,42 @@ public class StateMachineNetFlow extends NetFlow {
      *
      * @param nextNetFlow
      */
-    public int correctCount = 0;
-    public void consumeNetFlow(StateMachineNetFlow nextNetFlow) {
-        /*
-        if (nextNetFlow.protocol == Protocol.OTHER || this.completed) {
-            this.completed = true;
-            return;
-        }
-        */
-
-        /*
-        if (nextNetFlow.srcIP.equals("75.59.67.186") || nextNetFlow.dstIP.equals("75.59.67.186")) {
-            this.correctCount++;
-            if (this.correctCount > 49) {
-                return;
-            }
-
-            System.out.println(this.correctCount + " - " + nextNetFlow.toString());
-        }
-
-        if (true) {
-            return;
-        }
-        */
-
-
-        /*
-        if (nextNetFlow.byteCount > 487500 && nextNetFlow.byteCount < 3712500) {
-            if (nextNetFlow.packetCount > 4500 && nextNetFlow.packetCount < 21000) {
-                correctCount++;
-                System.out.println(nextNetFlow.toString() + " - " + this.correctCount);
-                return;
-            }
-        }
-
-        this.completed = true;
-
-        if (true) {
-            return;
-        }
-        */
-
-
+    public void consumeElement(StateMachineNetFlow nextNetFlow) {
         // start with processing this object, before processing all rolling NetFlows
         if (this.flow_counter == 0) {
-            //System.out.println(this.stateMachineID + " reducing first NetFlow");
             resetStateMachine();
+            /*
+            if (this.combination != null) {
+                String[] parts = this.combination.split("-");
+                this.root.changeSM(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+            }
+            System.out.println("Set" + this.datasetLabel + " reducing first NetFlow [" + this.root.WIDTH + "," + this.root.DEPTH + "]");
+            */
+            System.out.println("Set" + this.datasetLabel + " reducing first NetFlow");
             processFlow(this);
+        }
+        if (nextNetFlow.lastFlow) {
+            if (!this.lastFlow) {
+                computePerformance();
+                this.lastFlow = true;
+            }
+            return;
         }
 
         processFlow(nextNetFlow);
-        //performModeSpecificAction();
+        performModeSpecificAction();
     }
 
     /**
      * Reset all parameters of this State Machine.
      */
     public void resetStateMachine() {
-        this.current_char = 'A';
         this.flow_counter = 0;
         this.skip_counter = 0;
         this.model_changed = false;
 
         this.future = new LinkedList<>();
         this.root = new State(State.Color.RED, 0);
-        this.root.setLabel(String.valueOf(this.current_char));
-        nextChar();
 
         this.instances = new HashMap<>();
         this.instances.put(this.root.hashCode(), new Pair(0, this.root));
@@ -230,7 +198,12 @@ public class StateMachineNetFlow extends NetFlow {
                     this.completed = true;
                 }
             } else if(this.mode == Mode.PAUTOMAC_VALIDATION) {
+                // no action needed
             }
+        }
+        // add future to the collection of all encountered patterns (only used for debugging)
+        if (OUTPUT_PATTERN_FILE) {
+            //patternFileOutput.addPattern(this.future);
         }
     }
 
@@ -281,14 +254,16 @@ public class StateMachineNetFlow extends NetFlow {
     public void processFlow(StateMachineNetFlow nextNetFlow) {
         // increase the counter, keeping track of how many flows are reduced into this object
         this.flow_counter++;
-        addForPercentile(nextNetFlow);
-
-        if (true) {
-            return;
-        }
+        //addForPercentile(nextNetFlow);
 
         // get the symbol of the incoming NetFlow
         Symbol incomingSymbol = getSymbol(nextNetFlow);
+
+        if (this.redStates.size() >= 25) {
+            return;
+        }
+
+        //System.out.println(nextNetFlow.datasetLabel + " " + incomingSymbol.toString());
 
         // update the future
         if (this.future.size() == FUTURE_SIZE) {
@@ -297,11 +272,6 @@ public class StateMachineNetFlow extends NetFlow {
             this.future.add(incomingSymbol);
             // only start processing the future if it has a sufficient size
             return;
-        }
-
-        // add future to the collection of all encountered patterns (only used for debugging)
-        if (OUTPUT_PATTERN_FILE) {
-            //patternFileOutput.addPattern(this.future);
         }
 
         if (this.mode == Mode.PAUTOMAC_VALIDATION) {
@@ -371,11 +341,10 @@ public class StateMachineNetFlow extends NetFlow {
             }
 
             // get the next state in the direction of the symbol of the consumed NetFlow
-            State next = instance.getState(this.currentSymbol, this.current_char);
+            State next = instance.getState(this.currentSymbol);
             if (next != null && next.new_state) {
                 visualiseStep();
                 next.new_state = false;
-                nextChar();
             }
 
             // if a state in the direction of the current symbol exists, add the next state to instances
@@ -447,7 +416,8 @@ public class StateMachineNetFlow extends NetFlow {
         }
 
         */
-        printPercentiles();
+
+        //printPercentiles();
 
         return this.srcIP
                 + "," + this.srcPort
@@ -457,17 +427,6 @@ public class StateMachineNetFlow extends NetFlow {
                 + "," + this.byteCount
                 + "," + this.packetCount
                 + "," + (int) this.averagePacketSize;
-    }
-
-    /**
-     * Update the current char to the next character of the alphabet.
-     *
-     * @return
-     */
-    public char nextChar() {
-        int value = this.current_char;
-        this.current_char = Character.valueOf((char) (value + 1));
-        return this.current_char;
     }
 
     /**
@@ -484,7 +443,7 @@ public class StateMachineNetFlow extends NetFlow {
             String sequence = transition.toString();
 
             for (int s = 1; s < 3; s++) {
-                state = state.getState(transition, null);
+                state = state.getState(transition);
                 if (state == null) {
                     sequence = null;
                     break;
@@ -639,6 +598,30 @@ public class StateMachineNetFlow extends NetFlow {
         } catch(IOException ex) {
             System.err.println("IOException: " + ex.getMessage());
         }
+    }
+
+
+    public void computePerformance() {
+        //System.out.println("set" + this.datasetLabel + " total flows: " + this.flow_counter + " number of states " + this.redStates.size());
+        String path = "input\\pautomac\\validation\\set" + this.datasetLabel + "\\0-1pautomac";
+        PautomacValidator validator = new PautomacValidator(path);
+        System.out.println("Result for set" + this.datasetLabel + ": " + validator.getDistance(this.root));
+
+        /*
+        try {
+            VisualisePAutomac visualiser = new VisualisePAutomac();
+            visualiser.visualise(path + "_model.txt");
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+        */
+
+        BlueFringeVisualiser bfvisualiser = new BlueFringeVisualiser(true);
+        bfvisualiser.visualise(this.redStates);
+        bfvisualiser.showVisualisation();
+        //bfvisualiser.writeToFile(this.stateMachineID);
+
+        resetStateMachine();
     }
 
 }

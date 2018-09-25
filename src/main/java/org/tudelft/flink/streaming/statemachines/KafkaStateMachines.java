@@ -14,6 +14,8 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
 import org.apache.flink.util.Collector;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
+import org.tudelft.flink.streaming.statemachines.validation.PautomacValidator;
+import org.tudelft.flink.streaming.statemachines.validation.VisualisePAutomac;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -52,7 +54,8 @@ public class KafkaStateMachines {
         // create stream
         DataStream<StateMachineNetFlow> netFlowStream = env.addSource(kafkaConsumer);
 
-        // write Kafka stream to standard out.
+        /*
+        // real-time detection
         DataStream<StateMachineNetFlow> hostSequences = netFlowStream
                 .flatMap(new FlatMapFunction<StateMachineNetFlow, StateMachineNetFlow>() {
                     @Override
@@ -63,17 +66,45 @@ public class KafkaStateMachines {
                     }
                 })
                 .keyBy("IPPairProtocol")
-                .timeWindow(Time.seconds(600))
+                //.timeWindow(Time.seconds(600))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
                     public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
-                        rollingCount.consumeNetFlow(newNetFlow);
+                        rollingCount.consumeElement(newNetFlow);
                         return rollingCount;
                     }
                 });
+        */
 
-        // output the results (with a single thread, rather than in parallel)
-        hostSequences.print().setParallelism(1);
+        /*
+        VisualisePAutomac vis = new VisualisePAutomac();
+        String path = "input\\pautomac\\validation\\set10\\0-1pautomac_model.txt";
+        vis.visualise(path);
+
+        if (true) {
+            return;
+        }
+        */
+
+        // PERFORMANCE EVALUATION - PAUTOMAC
+        // learn statemachines
+        DataStream<StateMachineNetFlow> datasetStateMachines = netFlowStream
+                .flatMap(new FlatMapFunction<StateMachineNetFlow, StateMachineNetFlow>() {
+                    @Override
+                    public void flatMap(StateMachineNetFlow in, Collector<StateMachineNetFlow> out) {
+                        for (StateMachineNetFlow flow : in.dataset) {
+                            out.collect(flow);
+                        }
+                    }
+                })
+                .keyBy("datasetLabel")
+                .reduce(new ReduceFunction<StateMachineNetFlow>() {
+                    @Override
+                    public StateMachineNetFlow reduce(StateMachineNetFlow rollingStateMachine, StateMachineNetFlow nextElement) {
+                        rollingStateMachine.consumeElement(nextElement);
+                        return rollingStateMachine;
+                    }
+                });
 
         // trigger execution
         env.execute("Kafka NetFlow StateMachines");

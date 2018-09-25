@@ -11,17 +11,18 @@ public class State {
     /**
      * the number of futures processed by a state at which the state is merged or becomes a red state.
      */
-    public final int SIGNIFICANCE_BOUNDARY = 50;//10;
+    public int SIGNIFICANCE_BOUNDARY = 100;//10;
     /**
      * the upper bound of the Chi-distance below which the sketches are regarded as similar.
      */
-    protected double CHI_SIMILARITY = 0.5;
+    //protected double CHI_SIMILARITY = 0.5;
+    //protected double KL_DIVERGENCE = 0.25;
     /**
      * the lower bound of the cosine similarity, above which the sketches are regarded as similar.
      */
-    protected double COSINE_SIMILARITY = 0.90;
-    protected int DEPTH = 10;
-    protected int WIDTH = 100;
+    public double COSINE_SIMILARITY = 0.8;
+    public int DEPTH = 5;
+    public int WIDTH = 250;
     /**
      * For visualisation purposes.
      */
@@ -40,7 +41,6 @@ public class State {
     protected Color color;
     protected int count;
     protected int depth;
-    protected String label;
     protected RandomWeightedCollection randomTransitions;
 
     /**
@@ -68,14 +68,6 @@ public class State {
 
     public void setCount(int count) {
         this.count = count;
-    }
-
-    public void setLabel(String label) {
-        //this.label = label;
-    }
-
-    public String getLabel() {
-        return this.label;
     }
 
     public void setDepth(int depth) {
@@ -191,14 +183,13 @@ public class State {
      * Return the state in the direction of the given transition symbol.
      *
      * @param transition
-     * @param current_char
      * @return
      */
-    public State getState(Symbol transition, Character current_char) {
+    public State getState(Symbol transition) {
         if (this.transitions.containsKey(transition)) {
             return this.transitions.get(transition);
         } else {
-            if (this.depth < Math.max(StateMachineNetFlow.FUTURE_SIZE, 5)) {
+            if (this.depth < Math.max(StateMachineNetFlow.FUTURE_SIZE, 8)) {
                 // if no transition exists yet and the maximum depth is not yet reached, create a new blue or white state
                 Color newColor = Color.WHITE;
                 if (this.color == Color.RED) {
@@ -206,9 +197,6 @@ public class State {
                 }
 
                 State newState = new State(newColor, this.depth + 1);
-                if (current_char != null) {
-                    newState.setLabel(String.valueOf(current_char));
-                }
                 setTransition(transition, newState);
                 newState.addInLink(transition,this);
                 newState.new_state = true;
@@ -217,6 +205,14 @@ public class State {
         }
         return null;
     }
+
+    /*
+    public void changeSM(int width, int depth) {
+        this.WIDTH = width;
+        this.DEPTH = depth;
+        this.sketch = new CountMinSketch(DEPTH, WIDTH, 1);
+    }
+    */
 
     /**
      * Change the color of this state to red.
@@ -237,7 +233,7 @@ public class State {
      */
     public void colorChildsBlue() {
         for (Symbol symbol : this.transitions.keySet()) {
-            State child = getState(symbol, null);
+            State child = getState(symbol);
             child.changeToBlue();
         }
     }
@@ -264,10 +260,10 @@ public class State {
     public void mergeChilds(State remainingState) {
         // loop through all childs of this state
         for (Symbol symbol : this.transitions.keySet()) {
-            State child = getState(symbol, null);
+            State child = getState(symbol);
 
             if (remainingState.hasTransition(symbol)) { // merge with corresponding child of the red state
-                State remainingChild = remainingState.getState(symbol, null);
+                State remainingChild = remainingState.getState(symbol);
                 remainingChild.mergeSketch(child.getSketch());
                 remainingChild.setCount(child.getCount() + remainingChild.getCount());
                 remainingState.transitionCounts.put(symbol, remainingState.transitionCounts.get(symbol) + this.transitionCounts.get(symbol));
@@ -310,6 +306,7 @@ public class State {
      */
     public State getMostSimilarState(List<State> otherStates) {
         double most_similar = 0;
+        //double most_similar = 10000;
         State mostSimilarState = null;
         // find most similar state
         for (State other : otherStates) {
@@ -318,11 +315,23 @@ public class State {
                 mostSimilarState = other;
                 most_similar = similarity;
             }
+            /*
+            double distance = getDistance(other);
+            if (distance < most_similar) {
+                mostSimilarState = other;
+                most_similar = distance;
+            }
+            */
         }
         // return most similar state if it exceeds the boundary
         if (most_similar > COSINE_SIMILARITY) {
             return mostSimilarState;
         }
+        /*
+        if (most_similar < KL_DIVERGENCE) {
+            return mostSimilarState;
+        }
+        */
         return null;
     }
 
@@ -335,6 +344,11 @@ public class State {
     public boolean similarTo(State other) {
         return getSimilarity(other) > COSINE_SIMILARITY;
     }
+    /*
+    public boolean similarTo(State other) {
+        return getDistance(other) < KL_DIVERGENCE;
+    }
+    */
 
     /**
      * Return the similarity of this state's sketch compared to the given other state's sketch.
@@ -359,9 +373,18 @@ public class State {
         */
 
         double similarity = cosineSimilarity(sketch1, sketch2);
-        //System.out.println("");
-        //System.out.println("SIM: " + similarity);
         return similarity;
+    }
+
+    public double getDistance(State other) {
+        double[] v1 = smoothen(this.getSketchVector());
+        double[] v2 = smoothen(other.getSketchVector());
+
+        double sum = 0;
+        for (int i = 0; i < v1.length; i++) {
+            sum += v1[i] * Math.log(v1[i] / v2[i]);
+        }
+        return sum;
     }
 
     public float[] getSketchVector() {
@@ -437,16 +460,23 @@ public class State {
      * @param vector
      * @return
      */
-    protected double[] normalize(long[] vector) {
-        double max = 0;
+    protected double[] smoothen(float[] vector) {
+        double[] smooth = new double[vector.length];
         for (int i = 0; i < vector.length; i++) {
-            if (vector[i] > max) {
-                max = vector[i];
+            smooth[i] = vector[i];
+            if (vector[i] == 0) {
+                smooth[i] = 0.0001;
             }
         }
-        double[] norm = new double[vector.length];
-        for (int i = 0; i < vector.length; i++) {
-            norm[i] = vector[i] / max;
+
+        double sum = 0.0;
+        for (int i = 0; i < smooth.length; i++) {
+            sum += smooth[i];
+        }
+
+        double[] norm = new double[smooth.length];
+        for (int i = 0; i < smooth.length; i++) {
+            norm[i] = smooth[i] / sum;
         }
         return norm;
     }
@@ -462,14 +492,14 @@ public class State {
         int count = 0;
 
         for (Symbol symbol : this.transitionCounts.keySet()) {
-            State next = getState(symbol, null);
+            State next = getState(symbol);
             if (next.getColor().equals(Color.RED)) {
                 count++;
             }
         }
 
         for (Symbol symbol : this.transitionCounts.keySet()) {
-            State next = getState(symbol, null);
+            State next = getState(symbol);
             if (next.getColor().equals(Color.BLUE)) {
                 continue;
             }
@@ -493,7 +523,7 @@ public class State {
     public int redStateTransitionCount() {
         int count = 0;
         for (Symbol symbol : this.transitionCounts.keySet()) {
-            State next = getState(symbol, null);
+            State next = getState(symbol);
             if (next.getColor().equals(Color.RED)) {
                 count += this.transitionCounts.get(symbol);
             }

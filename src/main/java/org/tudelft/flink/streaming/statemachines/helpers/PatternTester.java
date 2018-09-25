@@ -22,17 +22,19 @@ public class PatternTester {
         List<Integer> pattern = Arrays.asList(
             0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1
         );
-        try {
-            pattern = readPattern();
-        } catch (Exception ex) {
-            System.out.println("Reading pattern error: " + ex.getMessage());
-        }
-
         setPattern(pattern);
     }
 
-    protected ArrayList<Integer> readPattern() throws FileNotFoundException {
-        String path = "input\\pautomac\\set-I\\0-1pautomac.train";
+    public PatternTester(String path) {
+        try {
+            List<Integer> pattern = readPattern(path);
+            setPattern(pattern);
+        } catch (Exception ex) {
+            System.out.println("Reading pattern error: " + ex.getMessage());
+        }
+    }
+
+    protected ArrayList<Integer> readPattern(String path) throws FileNotFoundException {
         File file = new File(path);
         Scanner sc = new Scanner(file);
         // skip first line
@@ -85,6 +87,13 @@ public class PatternTester {
             this.currentIndex = 0;
         }
         return next;
+    }
+
+    /**
+     * Start at the first pattern.
+     */
+    public void reset() {
+        this.currentIndex = 0;
     }
 
 }
