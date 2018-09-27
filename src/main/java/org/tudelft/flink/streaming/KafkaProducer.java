@@ -23,10 +23,10 @@ public class KafkaProducer {
         properties.setProperty("value.serializer","org.apache.kafka.common.serialization.StringSerializer");
         org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(properties);
 
-        producePerformanceTestData(producer);
+        //producePerformanceTestData(producer);
         //produceDebug(producer);
         //producePatterns(producer);
-        //replayStratosphere(producer);
+        replayStratosphere(producer);
     }
 
     protected static void producePerformanceTestData(org.apache.kafka.clients.producer.KafkaProducer<String, String> producer) throws Exception {
@@ -186,7 +186,12 @@ public class KafkaProducer {
         //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\348-1-HTBot.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
         //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\malware\\349-1-Adload.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
 
-        NetFlowReader reader = new NetFlowReader("input\\fingerprints\\vertical-scan\\vertical-scan.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
+        //NetFlowReader reader = new NetFlowReader("input\\fingerprints\\vertical-scan\\vertical-scan.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
+
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multiday\\338-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multiday\\342-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multiday\\348-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multiday\\349-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
 
         int counter = 0;
         while (counter >= 0) {

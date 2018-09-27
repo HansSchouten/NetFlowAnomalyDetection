@@ -69,6 +69,9 @@ public class FingerprintMatcher {
         loadFingerprint("input\\fingerprints\\htbot-19days\\195.113.232.80\\traces-192.168.1.130-195.113.232.80-TCP-day2-21-152033.643.txt", "HTbot - Type I - 195.113.232.80 - Step 3");
         */
 
+
+
+        /*
         loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-6-205430.122.txt", "Trickbot (Jan) 1d");
         loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-7-205430.254.txt", "Trickbot (Jan) 1d");
         loadFingerprint("input\\fingerprints\\trickbot-january-1d\\c&c1\\traces-192.168.1.123-37.230.114.93-TCP-day2-8-205430.389.txt", "Trickbot (Jan) 1d");
@@ -95,6 +98,10 @@ public class FingerprintMatcher {
         loadFingerprint("input\\fingerprints\\zeus-august-2h\\c&c1\\traces-10.8.23.101-185.231.153.228-TCP-9-212232.678.txt", "Zeus (Augustus) 2h");
 
         loadFingerprint("input\\fingerprints\\vertical-scan\\traces-192.168.2.2-192.168.2.102-TCP-0-233828.963.txt", "Vertical Port Scan");
+        */
+
+
+        loadFingerprint("input\\stratosphere\\multiday\\342-1.txt", "342-1");
 
         System.out.println(this.fingerprints.size() + " fingerprint(s) pre-loaded");
     }

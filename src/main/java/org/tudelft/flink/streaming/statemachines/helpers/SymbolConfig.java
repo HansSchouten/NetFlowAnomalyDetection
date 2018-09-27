@@ -42,7 +42,9 @@ public class SymbolConfig {
 
         //Scanner sc = new Scanner("packetsize\n0-68 68-129 129-382 382-\n#packets\n0-4 4-8 8-11 11-");
         // port scans
-        Scanner sc = new Scanner("packetsize\n0-68 68-129 129-382 382-\n#packets\n0-2 2-4 4-8 8-11 11-");
+        //Scanner sc = new Scanner("packetsize\n0-68 68-129 129-382 382-\n#packets\n0-2 2-4 4-8 8-11 11-");
+        // final
+        Scanner sc = new Scanner("packetsize\n0-77 77-148 148-221 221-413 413-\n#packets\n0-2 2-8 8-");
 
         while (sc.hasNextLine()) {
             // read key line

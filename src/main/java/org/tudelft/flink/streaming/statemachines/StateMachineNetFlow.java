@@ -37,7 +37,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * The current execution mode.
      */
-    public Mode mode = Mode.PAUTOMAC_VALIDATION;
+    public Mode mode = Mode.REALTIME_DETECTION;
     /**
      * Show a visualisation for each step of learning the State Machine.
      */
@@ -127,7 +127,7 @@ public class StateMachineNetFlow extends NetFlow {
     }
 
     public void setSingleFlow() {
-        this.stateMachineID = this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();// + "-day" + this.start;
+        this.stateMachineID = "day-" + this.start + "-" + this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();// + "-day" + this.start;
     }
 
     /**
@@ -373,7 +373,7 @@ public class StateMachineNetFlow extends NetFlow {
 
     protected void visualiseStep() {
         if (VISUALISE_STEPS) {
-            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(false);
+            BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
             visualiser.visualise(this.redStates);
             //visualiser.showVisualisation();
             visualiser.writeToFile(this.stateMachineID);

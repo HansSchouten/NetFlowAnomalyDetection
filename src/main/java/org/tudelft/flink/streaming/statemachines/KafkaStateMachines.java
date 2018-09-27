@@ -54,8 +54,7 @@ public class KafkaStateMachines {
         // create stream
         DataStream<StateMachineNetFlow> netFlowStream = env.addSource(kafkaConsumer);
 
-        /*
-        // real-time detection
+        // real-time learning/detection
         DataStream<StateMachineNetFlow> hostSequences = netFlowStream
                 .flatMap(new FlatMapFunction<StateMachineNetFlow, StateMachineNetFlow>() {
                     @Override
@@ -74,7 +73,6 @@ public class KafkaStateMachines {
                         return rollingCount;
                     }
                 });
-        */
 
         /*
         VisualisePAutomac vis = new VisualisePAutomac();
@@ -86,6 +84,7 @@ public class KafkaStateMachines {
         }
         */
 
+        /*
         // PERFORMANCE EVALUATION - PAUTOMAC
         // learn statemachines
         DataStream<StateMachineNetFlow> datasetStateMachines = netFlowStream
@@ -105,6 +104,7 @@ public class KafkaStateMachines {
                         return rollingStateMachine;
                     }
                 });
+        */
 
         // trigger execution
         env.execute("Kafka NetFlow StateMachines");

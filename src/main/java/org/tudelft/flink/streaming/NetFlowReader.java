@@ -123,18 +123,35 @@ public class NetFlowReader {
 
     public String getNextStratosphere() {
         JSONObject jsonFlow = new JSONObject();
+        String[] args = this.nextLine.split("\t");
 
-        String[] args = this.nextLine.split(",");
+        if (this.switching == false && (args[0].contains("01:00:") || args[0].contains("01:01:"))) {
+            this.switching = true;
+        }
+        if (this.switching && (args[0].contains("23:00:") || args[0].contains("23:01:"))) {
+            this.switching = false;
+            this.day++;
+            System.out.println(day);
+        }
+        if (this.switching) {
+            return null;
+        }
+
+        // only tcp + udp
+        if (!getProtocolCode(args[2]).equals("17") && !getProtocolCode(args[2]).equals("6")) {
+            return null;
+        }
 
         try {
             JSONArray jsonFlowData = new JSONArray();
             jsonFlowData.put(createArg(1, "0x" + Long.toHexString(Long.valueOf(args[12]))));
             jsonFlowData.put(createArg(2, "0x" + Long.toHexString(Long.valueOf(args[11]))));
+            jsonFlowData.put(createArg(4, getProtocolCode(args[2])));
             jsonFlowData.put(createArg(7, args[4]));
             jsonFlowData.put(createArg(8, args[3]));
             jsonFlowData.put(createArg(11, args[7]));
             jsonFlowData.put(createArg(12, args[6]));
-            jsonFlowData.put(createArg(21, "0"));
+            jsonFlowData.put(createArg(21, Integer.toString(this.day)));
             Long val = Long.valueOf(Math.round(Float.valueOf(args[1])));
             jsonFlowData.put(createArg(22, val.toString()));
 
