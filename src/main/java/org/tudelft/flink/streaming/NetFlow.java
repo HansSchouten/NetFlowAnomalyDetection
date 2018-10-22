@@ -3,6 +3,7 @@ package org.tudelft.flink.streaming;
 import java.io.Serializable;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
 
 public class NetFlow implements Serializable {
 
@@ -60,6 +61,15 @@ public class NetFlow implements Serializable {
         }
         // take NetFLow variables from JSON object
         if (jsonNode != null) {
+            /*
+            int count = Integer.parseInt(jsonNode.get("Header").get("SeqNum").toString());
+            //System.out.println(count);
+            if (count == 0) {
+                System.out.println(System.currentTimeMillis());
+            }
+            */
+
+
             this.json = jsonNode.toString();
             return jsonNode.get("DataSets");
         }
@@ -83,7 +93,7 @@ public class NetFlow implements Serializable {
         }
         */
         this.IPPair = this.srcIP + "," + this.dstIP;
-        this.IPPairProtocol = this.IPPair + "," + this.protocol.toString() + ",day" + this.start;
+        this.IPPairProtocol = this.IPPair + "," + this.protocol.toString();// + ",day" + this.start;
         // collect all flows in one stream for debugging
         //this.IPPairProtocol = "DEBUG";
         /*
@@ -95,6 +105,12 @@ public class NetFlow implements Serializable {
         /*
         if (this.combination != null) {
             this.group = this.datasetLabel + "-" + this.combination;
+        }
+        */
+        /*
+        if (this.protocol != Protocol.TCP && this.protocol != Protocol.UDP) {
+            this.IPPairProtocol = "non-http";
+            this.protocol = Protocol.OTHER;
         }
         */
 

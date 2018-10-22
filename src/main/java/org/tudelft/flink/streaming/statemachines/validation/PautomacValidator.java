@@ -117,10 +117,10 @@ public class PautomacValidator {
                     chance = 0;
                     break;
                 }
-                Double transitionProbability = 0.0;
-                try {
-                    transitionProbability = state.getTransitionProbability(symbol);
-                } catch (Exception ex) {
+                Double transitionProbability = state.getTransitionProbability(symbol);
+                if (transitionProbability == null) {
+                    chance = 0;
+                    break;
                 }
                 chance *= transitionProbability;
                 state = nextState;

@@ -538,7 +538,7 @@ public class State {
      * @return
      */
     public Double getTransitionProbability(Symbol symbol) {
-        if (this.transitionCounts.containsKey(symbol)) {
+        if (this.transitionCounts.containsKey(symbol) && redStateTransitionCount() > 0) {
             return this.transitionCounts.get(symbol) / (double) redStateTransitionCount();
         } else {
             return null;

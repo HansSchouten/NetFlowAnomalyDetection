@@ -14,8 +14,6 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
 import org.apache.flink.util.Collector;
 import org.tudelft.flink.streaming.statemachines.helpers.SymbolConfig;
-import org.tudelft.flink.streaming.statemachines.validation.PautomacValidator;
-import org.tudelft.flink.streaming.statemachines.validation.VisualisePAutomac;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -43,13 +41,15 @@ public class KafkaStateMachines {
         //env.enableCheckpointing(3600000, CheckpointingMode.EXACTLY_ONCE);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+        //env.getConfig().setLatencyTrackingInterval(1L);
 
         // create Kafka consumer
         FlinkKafkaConsumer010<StateMachineNetFlow> kafkaConsumer = new FlinkKafkaConsumer010<>(
                 parameterTool.getRequired("topic"),
                 new StateMachineNetFlowSchema(),
                 parameterTool.getProperties());
+
 
         // create stream
         DataStream<StateMachineNetFlow> netFlowStream = env.addSource(kafkaConsumer);

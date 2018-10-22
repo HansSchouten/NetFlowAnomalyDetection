@@ -37,7 +37,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * The current execution mode.
      */
-    public Mode mode = Mode.REALTIME_DETECTION;
+    public Mode mode = Mode.LEARN_ATTACK_MODELS;
     /**
      * Show a visualisation for each step of learning the State Machine.
      */
@@ -127,7 +127,8 @@ public class StateMachineNetFlow extends NetFlow {
     }
 
     public void setSingleFlow() {
-        this.stateMachineID = "day-" + this.start + "-" + this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();// + "-day" + this.start;
+        //this.stateMachineID = "day-" + this.start + "-" + this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();
+        this.stateMachineID = this.srcIP + "-" + this.dstIP + "-" + this.protocol.toString();
     }
 
     /**
@@ -146,7 +147,7 @@ public class StateMachineNetFlow extends NetFlow {
             }
             System.out.println("Set" + this.datasetLabel + " reducing first NetFlow [" + this.root.WIDTH + "," + this.root.DEPTH + "]");
             */
-            System.out.println("Set" + this.datasetLabel + " reducing first NetFlow");
+            //System.out.println("Set" + this.datasetLabel + " reducing first NetFlow");
             processFlow(this);
         }
         if (nextNetFlow.lastFlow) {
@@ -221,15 +222,17 @@ public class StateMachineNetFlow extends NetFlow {
      */
     public int increasing_int = 0;
     public void visualiseMalwareModel() {
+        int count = outputRandomTraces();
+        if (count <= 0) {
+            return;
+        }
+
         BlueFringeVisualiser visualiser = new BlueFringeVisualiser(true);
         String tmp = this.stateMachineID;
         this.stateMachineID += "-" + this.increasing_int;
         this.increasing_int++;
         visualiser.visualise(this.redStates);
         visualiser.writeToFile(this.stateMachineID);
-        if (this.mode == Mode.LEARN_ATTACK_MODELS) {
-            outputRandomTraces();
-        }
         this.stateMachineID = tmp;
     }
 
@@ -431,15 +434,20 @@ public class StateMachineNetFlow extends NetFlow {
 
     /**
      * Generate random traces and write them to file.
+     *
+     * @return
      */
-    public void outputRandomTraces() {
+    public int outputRandomTraces() {
         HashMap<String, Double> traces = new HashMap<>();
 
         for (int i = 0; i < 10000; i++) {
             State state = this.root;
 
             Symbol transition = state.getRandomTransition();
-            double chance = state.getTransitionProbability(transition);
+            Double chance = state.getTransitionProbability(transition);
+            if (chance == null) {
+                continue;
+            }
             String sequence = transition.toString();
 
             for (int s = 1; s < 3; s++) {
@@ -453,7 +461,12 @@ public class StateMachineNetFlow extends NetFlow {
                     sequence = null;
                     break;
                 }
-                chance *= state.getTransitionProbability(transition);
+                Double transitionProbability = state.getTransitionProbability(transition);
+                if (transitionProbability == null) {
+                    sequence = null;
+                    break;
+                }
+                chance *= transitionProbability;
                 sequence += " " + transition.toString();
             }
 
@@ -462,13 +475,16 @@ public class StateMachineNetFlow extends NetFlow {
             }
         }
 
+        if (traces.size() <= 3) {
+            return 0;
+        }
         for (String trace : traces.keySet()) {
             System.out.println(trace + " : " + traces.get(trace));
         }
 
         String cleanID = this.stateMachineID.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
         String timeStamp = new SimpleDateFormat("HHmmss.SSS").format(Calendar.getInstance().getTime());
-        String path = "output\\state-machines\\traces-" + cleanID + "-" + timeStamp + ".txt";
+        String path = "output\\state-machines\\traces-" + cleanID + "-" + this.increasing_int + "-" + timeStamp + ".txt";
         System.out.println(path);
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(path));
@@ -481,6 +497,8 @@ public class StateMachineNetFlow extends NetFlow {
         catch(IOException ex) {
             System.out.println("Error writing State Machine trace file:\n" + ex.getMessage());
         }
+
+        return traces.size();
     }
 
     /**

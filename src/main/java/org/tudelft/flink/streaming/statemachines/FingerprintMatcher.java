@@ -100,10 +100,9 @@ public class FingerprintMatcher {
         loadFingerprint("input\\fingerprints\\vertical-scan\\traces-192.168.2.2-192.168.2.102-TCP-0-233828.963.txt", "Vertical Port Scan");
         */
 
+        //loadFingerprint("input\\stratosphere\\multiday\\210-1.txt", "Malware");
 
-        loadFingerprint("input\\stratosphere\\multiday\\342-1.txt", "342-1");
-
-        System.out.println(this.fingerprints.size() + " fingerprint(s) pre-loaded");
+        //System.out.println(this.fingerprints.size() + " fingerprint(s) pre-loaded");
     }
 
     /**
@@ -143,7 +142,7 @@ public class FingerprintMatcher {
                 Fingerprint fingerprint = this.fingerprints.get(name).get(step - 1);
                 boolean match = fingerprint.match(statemachine.root, statemachine.stateMachineID);
                 if (match) {
-                    //statemachine.visualiseMatchingMalwareModel();
+                    statemachine.visualiseMatchingMalwareModel();
                     if (step == maxStep) {
                         this.fingerprintSteps.put(name, step + 1);
                     }

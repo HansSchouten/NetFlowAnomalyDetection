@@ -125,22 +125,29 @@ public class NetFlowReader {
         JSONObject jsonFlow = new JSONObject();
         String[] args = this.nextLine.split("\t");
 
-        if (this.switching == false && (args[0].contains("01:00:") || args[0].contains("01:01:"))) {
-            this.switching = true;
-        }
-        if (this.switching && (args[0].contains("23:00:") || args[0].contains("23:01:"))) {
+        /*
+        if (this.switching == true && (args[0].contains("01:00:") || args[0].contains("01:01:"))) {
             this.switching = false;
             this.day++;
-            System.out.println(day);
+            System.out.println("Switching to day " + day);
+        }
+        if (this.switching == false && (args[0].contains("23:00:") || args[0].contains("23:01:"))) {
+            this.switching = true;
         }
         if (this.switching) {
             return null;
         }
-
+        */
         // only tcp + udp
         if (!getProtocolCode(args[2]).equals("17") && !getProtocolCode(args[2]).equals("6")) {
             return null;
         }
+        /*
+        // only from/to infected host
+        if (!args[3].equals("192.168.1.122") && !args[5].equals("192.168.1.122")) {
+            return null;
+        }
+        */
 
         try {
             JSONArray jsonFlowData = new JSONArray();
@@ -195,20 +202,20 @@ public class NetFlowReader {
         return jsonFlow.toString();
     }
 
-    public boolean switching = true;
-    public int day = 0;
+    public boolean switching = false;
+    public int day = 1;
     public String getNextCustomNFDump() {
         JSONObject jsonFlow = new JSONObject();
         String[] args = this.nextLine.split(",");
 
         /*
-        if (this.switching == false && (args[0].contains("17:40:") || args[0].contains("17:41:"))) {
-            this.switching = true;
-        }
-        if (this.switching && (args[0].contains("10:00:") || args[0].contains("10:01:"))) {
+        if (this.switching == true && (args[0].contains("01:00:") || args[0].contains("01:01:"))) {
             this.switching = false;
             this.day++;
             System.out.println(day);
+        }
+        if (this.switching == false && (args[0].contains("23:00:") || args[0].contains("23:01:"))) {
+            this.switching = true;
         }
         if (this.switching) {
             return null;

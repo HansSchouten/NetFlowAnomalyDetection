@@ -188,10 +188,7 @@ public class KafkaProducer {
 
         //NetFlowReader reader = new NetFlowReader("input\\fingerprints\\vertical-scan\\vertical-scan.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
 
-        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multiday\\338-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
-        NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multiday\\342-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
-        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multiday\\348-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
-        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multiday\\349-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\artemis\\306-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
 
         int counter = 0;
         while (counter >= 0) {

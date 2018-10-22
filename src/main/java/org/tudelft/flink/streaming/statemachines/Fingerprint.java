@@ -14,8 +14,8 @@ public class Fingerprint {
     protected boolean isLoaded = false;
 
     protected double previousDistance;
-    public static double MATCH_THRESHOLD = 1.0;
-    public static double MIN_PROBABILITY = 0.000001;
+    public static double MATCH_THRESHOLD = 0.8;
+    public static double MIN_PROBABILITY = 0.00000001;
 
     /**
      * Fingerprint constructor.
@@ -109,6 +109,10 @@ public class Fingerprint {
                     break;
                 }
                 Double transitionProbability = state.getTransitionProbability(symbol);
+                if (transitionProbability == null) {
+                    chance = 0;
+                    break;
+                }
                 chance *= transitionProbability;
                 state = nextState;
             }
