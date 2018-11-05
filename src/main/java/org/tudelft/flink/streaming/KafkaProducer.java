@@ -190,6 +190,21 @@ public class KafkaProducer {
 
 
 
+        // NORMAL DATA
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-5.binetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-6.binetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-20.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-22.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-23.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-24.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-25.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-26.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-27.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-29.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-30.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-31.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\normal\\normal-32.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+
 
 
         // EVALUATION DATASETS

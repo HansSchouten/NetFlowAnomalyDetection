@@ -114,7 +114,7 @@ public class FingerprintMatcher {
         loadFingerprint("input\\fingerprints\\dridex\\traces-192.168.1.123-136.243.209.34-TCP-1-194541.430.txt", "Dridex 2");
         loadFingerprint("input\\fingerprints\\dridex\\traces-192.168.1.123-198.167.136.139-TCP-1-194539.650.txt", "Dridex 3");
 
-        loadFingerprint("input\\fingerprints\\trickbot\\traces-192.168.1.123-95.154.199.237-TCP-0-090030.552.txt", "Trickbot 1");
+        loadFingerprint("input\\fingerprints\\trickbot\\traces-192.168.1.123-95.154.199.237-TCP-1-090031.552.txt", "Trickbot 1");
         loadFingerprint("input\\fingerprints\\trickbot\\traces-192.168.1.123-95.213.195.169-TCP-2-090032.711.txt", "Trickbot 2");
         loadFingerprint("input\\fingerprints\\trickbot\\traces-192.168.1.123-141.255.167.124-TCP-2-090033.424.txt", "Trickbot 3");
 
