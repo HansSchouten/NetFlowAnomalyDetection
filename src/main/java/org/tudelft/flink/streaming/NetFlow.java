@@ -29,6 +29,7 @@ public class NetFlow implements Serializable {
     /**
      * Parameters to group on.
      */
+    public String sourceIP;
     public String IPPair;
     public String IPPairProtocol;
     public String datasetLabel; // used for testing performance
@@ -92,6 +93,7 @@ public class NetFlow implements Serializable {
             this.IPPair = this.dstIP + "," + this.srcIP;
         }
         */
+        this.sourceIP = this.srcIP;
         this.IPPair = this.srcIP + "," + this.dstIP;
         this.IPPairProtocol = this.IPPair + "," + this.protocol.toString();// + ",day" + this.start;
         // collect all flows in one stream for debugging

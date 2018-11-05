@@ -1,0 +1,19 @@
+170 FP
+91.200.14.80
+91.219.31.20
+51.254.240.164
+
+176
+91.200.14.80 [S,B]
+51.254.240.164 [S,B]
+164.132.138.50 [S]
+blacklist: 2/3 [66%]
+sbf: 3/3 [100%]
+
+TOTAL CHANNEL
+blacklisting: 0%
+sbf: 100%
+
+TOTAL HOST
+blacklisting: 0%
+sbf: 100%

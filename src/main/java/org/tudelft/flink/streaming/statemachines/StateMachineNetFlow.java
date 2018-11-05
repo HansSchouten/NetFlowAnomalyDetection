@@ -37,7 +37,7 @@ public class StateMachineNetFlow extends NetFlow {
     /**
      * The current execution mode.
      */
-    public Mode mode = Mode.LEARN_ATTACK_MODELS;
+    public Mode mode = Mode.REALTIME_DETECTION;
     /**
      * Show a visualisation for each step of learning the State Machine.
      */
@@ -102,6 +102,8 @@ public class StateMachineNetFlow extends NetFlow {
     public List<StateMachineNetFlow> dataset;
 
     public boolean completed = false;
+
+    public int aggregate_count = 0;
 
 
     /**
@@ -418,9 +420,12 @@ public class StateMachineNetFlow extends NetFlow {
             this.patternFileOutput.writeToFile(this.stateMachineID);
         }
 
+        printPercentiles();
         */
 
-        //printPercentiles();
+        if (this.aggregate_count > 0) {
+            return String.valueOf(this.aggregate_count);
+        }
 
         return this.srcIP
                 + "," + this.srcPort
@@ -640,6 +645,33 @@ public class StateMachineNetFlow extends NetFlow {
         //bfvisualiser.writeToFile(this.stateMachineID);
 
         resetStateMachine();
+    }
+
+
+
+
+    public void doNothing(StateMachineNetFlow nextNetFlow) {
+
+    }
+
+    /**
+     * Count the total number of hosts.
+     *
+     * @param nextCombination
+     */
+    public void countHosts(StateMachineNetFlow nextCombination) {
+        this.aggregate_count++;
+        System.out.println(nextCombination.srcIP + ": " + this.aggregate_count);
+    }
+
+    /**
+     * Count the total number of channels.
+     *
+     * @param nextCombination
+     */
+    public void countChannels(StateMachineNetFlow nextCombination) {
+        this.aggregate_count++;
+        System.out.println(nextCombination.srcIP + "-" + nextCombination.dstIP + "-" + nextCombination.protocol + ": " + this.aggregate_count);
     }
 
 }

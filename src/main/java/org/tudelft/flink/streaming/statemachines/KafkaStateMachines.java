@@ -10,6 +10,7 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
 import org.apache.flink.util.Collector;
@@ -41,7 +42,7 @@ public class KafkaStateMachines {
         //env.enableCheckpointing(3600000, CheckpointingMode.EXACTLY_ONCE);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+        env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
         //env.getConfig().setLatencyTrackingInterval(1L);
 
         // create Kafka consumer
@@ -65,7 +66,6 @@ public class KafkaStateMachines {
                     }
                 })
                 .keyBy("IPPairProtocol")
-                //.timeWindow(Time.seconds(600))
                 .reduce(new ReduceFunction<StateMachineNetFlow>() {
                     @Override
                     public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
@@ -73,6 +73,84 @@ public class KafkaStateMachines {
                         return rollingCount;
                     }
                 });
+
+
+
+
+        /*
+        // COUNT HOSTS
+        DataStream<StateMachineNetFlow> hostSequences = netFlowStream
+                .flatMap(new FlatMapFunction<StateMachineNetFlow, StateMachineNetFlow>() {
+                    @Override
+                    public void flatMap(StateMachineNetFlow in, Collector<StateMachineNetFlow> out) {
+                        for (StateMachineNetFlow flow : in.dataset) {
+                            out.collect(flow);
+                        }
+                    }
+                })
+                .keyBy("sourceIP")
+                .timeWindow(Time.seconds(45))
+                .reduce(new ReduceFunction<StateMachineNetFlow>() {
+                    @Override
+                    public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
+                        rollingCount.doNothing(newNetFlow);
+                        return rollingCount;
+                    }
+                });
+
+        DataStream<StateMachineNetFlow> count = hostSequences
+                .windowAll(TumblingEventTimeWindows.of(Time.seconds(5)))
+                .reduce(new ReduceFunction<StateMachineNetFlow>() {
+                    @Override
+                    public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
+                        rollingCount.countHosts(newNetFlow);
+                        return rollingCount;
+                    }
+                });
+
+        count.print().setParallelism(1);
+        */
+
+
+
+
+        /*
+        // COUNT CHANNELS
+        DataStream<StateMachineNetFlow> hostSequences = netFlowStream
+                .flatMap(new FlatMapFunction<StateMachineNetFlow, StateMachineNetFlow>() {
+                    @Override
+                    public void flatMap(StateMachineNetFlow in, Collector<StateMachineNetFlow> out) {
+                        for (StateMachineNetFlow flow : in.dataset) {
+                            out.collect(flow);
+                        }
+                    }
+                })
+                .keyBy("IPPairProtocol")
+                .timeWindow(Time.seconds(60))
+                .reduce(new ReduceFunction<StateMachineNetFlow>() {
+                    @Override
+                    public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
+                        rollingCount.consumeElement(newNetFlow);
+                        return rollingCount;
+                    }
+                });
+
+        DataStream<StateMachineNetFlow> count = hostSequences
+                .windowAll(TumblingEventTimeWindows.of(Time.seconds(5)))
+                .reduce(new ReduceFunction<StateMachineNetFlow>() {
+                    @Override
+                    public StateMachineNetFlow reduce(StateMachineNetFlow rollingCount, StateMachineNetFlow newNetFlow) {
+                        rollingCount.countChannels(newNetFlow);
+                        return rollingCount;
+                    }
+                });
+
+        count.print().setParallelism(1);
+        */
+
+
+
+
 
         /*
         VisualisePAutomac vis = new VisualisePAutomac();

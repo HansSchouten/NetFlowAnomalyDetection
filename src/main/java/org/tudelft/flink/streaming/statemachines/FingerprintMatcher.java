@@ -100,7 +100,23 @@ public class FingerprintMatcher {
         loadFingerprint("input\\fingerprints\\vertical-scan\\traces-192.168.2.2-192.168.2.102-TCP-0-233828.963.txt", "Vertical Port Scan");
         */
 
-        //loadFingerprint("input\\stratosphere\\multiday\\210-1.txt", "Malware");
+
+        // EVALUATION FINGERPRINTS
+
+        loadFingerprint("input\\fingerprints\\necurse\\traces-10.0.2.106-51.254.240.164-TCP-6-084145.589.txt", "Necurse 1");
+        loadFingerprint("input\\fingerprints\\necurse\\traces-10.0.2.106-91.200.14.80-TCP-5-084144.540.txt", "Necurse 2");
+        loadFingerprint("input\\fingerprints\\necurse\\traces-10.0.2.106-91.219.31.20-TCP-5-084145.154.txt", "Necurse 3");
+
+        loadFingerprint("input\\fingerprints\\emotet\\traces-192.168.1.120-87.106.77.193-TCP-3-190454.844.txt", "Emotet 1");
+        loadFingerprint("input\\fingerprints\\emotet\\traces-192.168.1.120-103.4.18.170-TCP-1-190458.256.txt", "Emotet 2");
+
+        loadFingerprint("input\\fingerprints\\dridex\\traces-192.168.1.123-8.8.247.90-TCP-1-194539.688.txt", "Dridex 1");
+        loadFingerprint("input\\fingerprints\\dridex\\traces-192.168.1.123-136.243.209.34-TCP-1-194541.430.txt", "Dridex 2");
+        loadFingerprint("input\\fingerprints\\dridex\\traces-192.168.1.123-198.167.136.139-TCP-1-194539.650.txt", "Dridex 3");
+
+        loadFingerprint("input\\fingerprints\\trickbot\\traces-192.168.1.123-95.154.199.237-TCP-0-090030.552.txt", "Trickbot 1");
+        loadFingerprint("input\\fingerprints\\trickbot\\traces-192.168.1.123-95.213.195.169-TCP-2-090032.711.txt", "Trickbot 2");
+        loadFingerprint("input\\fingerprints\\trickbot\\traces-192.168.1.123-141.255.167.124-TCP-2-090033.424.txt", "Trickbot 3");
 
         //System.out.println(this.fingerprints.size() + " fingerprint(s) pre-loaded");
     }

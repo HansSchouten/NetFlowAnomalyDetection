@@ -11,7 +11,7 @@ public class State {
     /**
      * the number of futures processed by a state at which the state is merged or becomes a red state.
      */
-    public int SIGNIFICANCE_BOUNDARY = 100;//10;
+    public int SIGNIFICANCE_BOUNDARY = 50;//10;
     /**
      * the upper bound of the Chi-distance below which the sketches are regarded as similar.
      */

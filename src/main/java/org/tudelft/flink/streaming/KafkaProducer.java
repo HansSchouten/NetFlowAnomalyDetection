@@ -188,7 +188,27 @@ public class KafkaProducer {
 
         //NetFlowReader reader = new NetFlowReader("input\\fingerprints\\vertical-scan\\vertical-scan.txt", NetFlowReader.Format.CUSTOM_NFDUMP);
 
-        NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\artemis\\306-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+
+
+
+
+        // EVALUATION DATASETS
+
+        NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\necurse\\176-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\dridex\\246-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\dridex\\248-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\dridex\\249-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\emotet\\268-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\emotet\\269-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\emotet\\271-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\emotet\\272-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\emotet\\276-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\emotet\\279-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\trickbot\\325-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
+        //NetFlowReader reader = new NetFlowReader("input\\stratosphere\\multisample\\trickbot\\327-1.uninetflow", NetFlowReader.Format.STRATOSPHERE);
 
         int counter = 0;
         while (counter >= 0) {
